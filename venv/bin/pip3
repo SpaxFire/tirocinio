@@ -1,4 +1,4 @@
-#!/home/spaxfire/tesi/venv/bin/python3
+#!/home/spaxfire/tirocinio/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

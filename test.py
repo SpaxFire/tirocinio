@@ -6,7 +6,35 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from uuid import uuid4
-from neo4j import GraphDatabase, RoutingControl
+from neo4j import GraphDatabase
+
+# connection to the neo4j db
+URI = "neo4j+s://59d9d16d.databases.neo4j.io"
+AUTH = ("59d9d16d", "UEFY7bEn9JLKCKSdQ66kU0uJStz8hE1dBD7Oq4rx2Jg")
+
+with GraphDatabase.driver(URI, auth=AUTH) as driver:
+    driver.verify_connectivity()
+
+summary = driver.execute_query("""
+    MATCH (n)
+    DETACH DELETE n
+    """,
+    database="59d9d16d",
+    database_="59d9d16d",
+).summary
+print("Deleted {nodes_created} nodes in {time} ms.".format(
+    nodes_created=summary.counters.nodes_deleted,
+    time=summary.result_available_after
+))
+summary = driver.execute_query("""
+    CREATE CONSTRAINT post_user IF NOT EXISTS FOR (p:Post) REQUIRE p.user IS UNIQUE
+    """,
+    database_="59d9d16d",
+).summary
+print("Added {constraint_created} constaint in {time} ms.".format(
+    constraint_created=summary.counters.constraints_added,
+    time=summary.result_available_after
+))
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"),name="static")
@@ -35,6 +63,17 @@ async def list_posts(request: Request, hx_request: Annotated[Union[str, None], H
 
 @app.post("/posts", response_class=HTMLResponse)
 async def create_post(request: Request, user : Annotated[str, Form()], text : Annotated[str, Form()], verified : Annotated[bool, Form()]):
+    summary = driver.execute_query("""
+        CREATE (p:Post {id: 1, user: $user, text: $text, verified: $verified})
+        RETURN p
+        """,
+        user=user,text=text, verified=verified,
+        database_="59d9d16d",
+    ).summary
+    print("Created {nodes_created} nodes in {time} ms.".format(
+        nodes_created=summary.counters.nodes_created,
+        time=summary.result_available_after
+    ))
     posts.append(Post(user, text, verified))
     return templates.TemplateResponse(
         request=request, name="posts.html", context={"posts": posts}
