@@ -1,0 +1,13 @@
+{% for post in posts %}
+<li class=" max-w-max mx-auto justify-items-center space-x-4 odd:bg-pink-200 even:bg-purple-200">
+    <label>{{ post.user }}:</label>
+    <input name="text" value="{{post.text}}" {% if not post.verified %} style="text-decoration: line-through"
+        disabled="true" {% endif %} hx-put="/posts/{{post.id}}" hx-target="#posts" hx-swap="innerHTML"
+        hx-trigger="keyup changed delay:250ms">
+    <input type="checkbox" {% if post.verified %} checked="true" {% endif %} hx-post="/posts/{{post.id}}/toggle"
+        hx-target="#posts" hx-swap="innerHTML">
+    <input
+        class="px-4 py-1 text-lg text-orange-500 font-semibold rounded-full border border-orange-500 hover:text-white hover:bg-orange-500 hover:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:text-blue-600"
+        value="X" type="button" hx-post="/posts/{{post.id}}/delete" hx-target="#posts" hx-swap="innerHTML">
+</li>
+{% endfor %}
