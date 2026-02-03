@@ -9,18 +9,18 @@ from uuid import uuid4
 from neo4j import GraphDatabase
 
 # connection to the neo4j db
-URI = "neo4j+s://59d9d16d.databases.neo4j.io"
-AUTH = ("59d9d16d", "UEFY7bEn9JLKCKSdQ66kU0uJStz8hE1dBD7Oq4rx2Jg")
+URI = "neo4j+s://4148cbd8.databases.neo4j.io"
+AUTH = ("neo4j", "Na-BH0ELGuexhejtnBBsUQqDl-KoJpA8soPaelB_gOI")
 
-with GraphDatabase.driver(URI, auth=AUTH) as driver:
-    driver.verify_connectivity()
+driver = GraphDatabase.driver(URI, auth=AUTH)
+driver.verify_connectivity()
 
 summary = driver.execute_query("""
     MATCH (n)
     DETACH DELETE n
     """,
-    database="59d9d16d",
-    database_="59d9d16d",
+    database="neo4j",
+    database_="neo4j",
 ).summary
 print("Deleted {nodes_created} nodes in {time} ms.".format(
     nodes_created=summary.counters.nodes_deleted,
@@ -29,7 +29,7 @@ print("Deleted {nodes_created} nodes in {time} ms.".format(
 summary = driver.execute_query("""
     CREATE CONSTRAINT post_user IF NOT EXISTS FOR (p:Post) REQUIRE p.user IS UNIQUE
     """,
-    database_="59d9d16d",
+    database_="neo4j",
 ).summary
 print("Added {constraint_created} constaint in {time} ms.".format(
     constraint_created=summary.counters.constraints_added,
@@ -51,7 +51,7 @@ class Post:
         self.text = text
         self.verified = verified
 
-posts = [Post("pippo", "messaggio di test"), Post("pluto", "messaggio di test 2", True)]
+posts = []
 
 @app.get("/posts", response_class=HTMLResponse)
 async def list_posts(request: Request, hx_request: Annotated[Union[str, None], Header()] = None):
@@ -68,7 +68,7 @@ async def create_post(request: Request, user : Annotated[str, Form()], text : An
         RETURN p
         """,
         user=user,text=text, verified=verified,
-        database_="59d9d16d",
+        database_="neo4j",
     ).summary
     print("Created {nodes_created} nodes in {time} ms.".format(
         nodes_created=summary.counters.nodes_created,
