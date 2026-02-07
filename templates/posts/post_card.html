@@ -1,0 +1,31 @@
+<a href="/posts/{{ post.id }}" class="block bg-white rounded-xl shadow p-4 mb-4 hover:bg-gray-50 transition">
+
+    <div class="flex justify-between items-center">
+        <span class="font-semibold text-gray-800">
+            {{ post.author }}
+        </span>
+        <span class="text-sm text-gray-500">
+            {{ post.created_at }}
+        </span>
+    </div>
+
+    <p class="mt-2 text-gray-700">
+        {{ post.content }}
+    </p>
+
+    {% if post.media %}
+    <img src="{{ post.media[0] }}" class="mt-3 rounded-lg max-h-64 object-cover">
+    {% endif %}
+
+    <div class="flex gap-6 mt-4 text-sm text-gray-600">
+
+        <div class="flex items-center gap-1">
+            ❤️ {{ post.like_count }}
+        </div>
+
+        <div class="flex items-center gap-1">
+            💬 {{ post.comment_count }}
+        </div>
+
+    </div>
+</a>

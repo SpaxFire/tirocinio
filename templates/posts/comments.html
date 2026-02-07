@@ -1,0 +1,6 @@
+{% for comment in comments %}
+<div class="border-b py-2">
+    <span class="font-semibold">{{ comment.author }}</span>
+    <p class="text-gray-700">{{ comment.text }}</p>
+</div>
+{% endfor %}

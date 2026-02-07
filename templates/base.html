@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="{{ url_for('static', path='/css/output.css') }}" rel="stylesheet">
+
+    <script src="https://unpkg.com/htmx.org@2.0.0"
+        integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw"
+        crossorigin="anonymous"></script>
+
+    <title>{% block title %}Social Network{% endblock %}</title>
+</head>
+
+<body class="bg-gray-100">
+    {% block content %}{% endblock %}
+</body>
+
+</html>

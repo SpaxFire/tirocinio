@@ -1,3 +1,39 @@
 @import "tailwindcss";
 
 @source "../templates/**/*.html";
+
+@layer base {
+    body {
+        @apply bg-gray-100 text-gray-800 font-sans leading-relaxed;
+    }
+
+    h1 {
+        @apply text-3xl font-bold;
+    }
+
+    h2 {
+        @apply text-2xl font-semibold;
+    }
+
+    h3 {
+        @apply text-xl font-semibold;
+    }
+
+    a {
+        @apply text-blue-600 hover:underline;
+    }
+}
+
+@layer components {
+    .post-card {
+        @apply bg-white rounded-xl shadow p-4;
+    }
+
+    .post-content {
+        @apply text-gray-700;
+    }
+
+    .comment {
+        @apply text-sm text-gray-600;
+    }
+}

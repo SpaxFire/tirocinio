@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Home - Social Network
+{% endblock %}
+
+{% block content %}
+<aside class="w-1/4">
+    {% include "components/sidebar_left.html" %}
+</aside>
+
+<section class="w-2/4" hx-get="/posts/feed" hx-trigger="load" hx-target="#feed" hx-swap="beforeend">
+    <div id="feed"></div>
+</section>
+
+
+<aside class="w-1/4">
+    {% include "components/sidebar_right.html" %}
+</aside>
+{% endblock %}
