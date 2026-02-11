@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-md mx-auto bg-white p-6 rounded-xl">
+
+    <h2 class="text-xl font-semibold mb-4">Login</h2>
+
+    <form method="post" action="/login" class="space-y-3">
+
+        <input name="username" class="w-full border rounded p-2">
+        <input type="password" name="password" class="w-full border rounded p-2">
+
+        <button class="w-full bg-blue-600 text-white rounded p-2">
+            Login
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

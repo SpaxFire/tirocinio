@@ -1,0 +1,12 @@
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center">
+
+    <div class="bg-white rounded-xl p-6 w-full max-w-md relative">
+
+        <button onclick="document.getElementById('modal-container').innerHTML=''" class="absolute top-3 right-3">
+            ✕
+        </button>
+
+        {{ content | safe }}
+
+    </div>
+</div>

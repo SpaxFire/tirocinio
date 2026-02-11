@@ -1,0 +1,20 @@
+{% set content %}
+<h2 class="text-lg font-semibold mb-4">Login</h2>
+
+<form hx-post="/login" hx-target="#form-error" hx-swap="innerHTML" class="space-y-3">
+    <input name="username" class="w-full border rounded p-2">
+    <input type="password" name="password" class="w-full border rounded p-2">
+
+    <button class="w-full bg-blue-600 text-white rounded p-2">
+        Login
+    </button>
+
+    <div id="form-error"></div>
+</form>
+
+<button hx-get="/register/modal" hx-target="#modal-container" hx-swap="innerHTML">
+    Registrati
+</button>
+{% endset %}
+
+{% include "components/modal.html" %}

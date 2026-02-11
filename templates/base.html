@@ -7,15 +7,65 @@
 
     <link href="{{ url_for('static', path='/css/output.css') }}" rel="stylesheet">
 
-    <script src="https://unpkg.com/htmx.org@2.0.0"
-        integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw"
-        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
 
     <title>{% block title %}Social Network{% endblock %}</title>
 </head>
 
-<body class="bg-gray-100">
-    {% block content %}{% endblock %}
+<body hx-boost="true" class="bg-gray-100">
+
+    <div class="max-w-7xl mx-auto flex gap-6 mt-6">
+
+        <!-- SIDEBAR -->
+        <aside class="w-1/4 sticky top-6 h-fit">
+            {% include "components/sidebar_left.html" %}
+        </aside>
+
+        <!-- CONTENUTO DINAMICO -->
+        <main id="main-content" class="w-2/4" hx-history-elt>
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- RIGHT -->
+        <aside class="w-1/4">
+            {% include "components/sidebar_right.html" %}
+        </aside>
+
+        <div id="user-widget" hx-get="/auth/user-widget" hx-trigger="load">
+        </div>
+    </div>
+
+    <div id="modal-container"></div>
+
+
+    <script>
+        document.body.addEventListener("htmx:afterOnLoad", function (evt) {
+
+            const url = window.location.pathname;
+
+            document.querySelectorAll(".nav-link").forEach(link => {
+                link.classList.remove("bg-gray-200");
+                if (link.getAttribute("hx-get") === url) {
+                    link.classList.add("bg-gray-200");
+                }
+            });
+
+        });
+
+        function setActiveMenu() {
+            const url = window.location.pathname;
+
+            document.querySelectorAll(".nav-link").forEach(link => {
+                link.classList.remove("bg-gray-200");
+                if (link.getAttribute("hx-get") === url) {
+                    link.classList.add("bg-gray-200");
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", setActiveMenu);
+        document.body.addEventListener("htmx:afterOnLoad", setActiveMenu);
+    </script>
 </body>
 
 </html>

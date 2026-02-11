@@ -1,0 +1,29 @@
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow p-6">
+
+    <h2 class="text-xl font-semibold">{{ post.author }}</h2>
+    <p class="text-gray-700 mt-2">{{ post.content }}</p>
+
+    {% if post.media %}
+    <img src="{{ post.media[0] }}" class="mt-4 rounded-lg">
+    {% endif %}
+
+    <div class="flex gap-6 mt-4 text-gray-600">
+        <button hx-post="/posts/{{ post.id }}/like" hx-trigger="click" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-1">
+            ❤️ {{ post.like_count }}
+        </button>
+        <button hx-get="/posts/{{ post.id }}/comment-form" hx-target="#modal-container" hx-swap="innerHTML"
+            class="flex items-center gap-1">
+            💬 {{ post.comment_count }}
+        </button>
+
+    </div>
+
+    <hr class="my-6">
+
+    <h3 class="font-semibold mb-3">Commenti</h3>
+
+    <div id="comments" hx-get="/posts/{{ post.id }}/comments" hx-trigger="load">
+    </div>
+
+</div>
