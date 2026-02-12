@@ -2,6 +2,8 @@ from typing import Annotated, Union
 from fastapi import APIRouter, HTTPException, Request, Form, Header, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
+from fastapi import UploadFile, File
+from app.services.media import save_post_media
 
 from app.api.routes.auth import require_user_cookie, optional_current_user_cookie
 from app.schemas.post import Post, PostCreate, PostUpdate
@@ -27,6 +29,84 @@ async def list_posts(
 
     return JSONResponse(content=jsonable_encoder(posts))
 
+@router.get("/create-box")
+async def create_post_box(request: Request):
+    return templates.TemplateResponse(
+        "posts/partials/create_post_box.html",
+        {
+            "request": request,
+        },
+    )
+
+@router.post("/create")
+async def create_post(
+    request: Request,
+    content: str = Form(""),
+    categories: str | None = Form(None),
+    media: list[UploadFile] | None = File(None),
+    user: UserInDB = Depends(require_user_cookie),
+):
+    try:
+        if not content.strip():
+            return HTMLResponse("""
+            <div id="post-success" hx-swap-oob="true"></div>
+
+            <div id="post-errors" hx-swap-oob="true"
+                class="text-red-500 text-sm mb-2">
+                Il contenuto del post è obbligatorio
+            </div>
+            """)
+
+
+        category_list = []
+        if categories:
+            category_list = [c.strip() for c in categories.split(",") if c.strip()]
+
+        media_urls = await save_post_media(media)
+
+        post_crud.create_post(
+            username=user.username,
+            content=content,
+            categories=category_list,
+            media_urls=media_urls,
+        )
+
+        return HTMLResponse("""
+        <div id="post-errors" hx-swap-oob="true"></div>
+
+        <div id="post-success"
+            hx-swap-oob="true"
+            hx-get="/posts/empty"
+            hx-trigger="load delay:3s"
+            hx-swap="outerHTML"
+            class="bg-green-100 text-green-700 p-2 rounded mb-2">
+            Post pubblicato con successo
+        </div>
+
+        <div id="feed"
+            hx-get="/posts/feed"
+            hx-trigger="load"
+            hx-swap="innerHTML"
+            hx-swap-oob="true">
+        </div>
+""")
+
+
+
+    except Exception as e:
+        return HTMLResponse(f"""
+        <div id="post-success" hx-swap-oob="true"></div>
+
+        <div id="post-errors" hx-swap-oob="true"
+             class="text-red-500 text-sm mb-2">
+             {str(e)}
+        </div>
+        """)
+
+@router.get("/empty")
+async def empty():
+    return HTMLResponse("""<div id="post-success"></div>""")
+
 @router.get("/feed", response_class=HTMLResponse)
 async def post_feed(
     request: Request,
@@ -45,9 +125,6 @@ async def post_feed(
             "has_more": len(posts) == page_size
         }
     )
-
-from typing import Annotated, Union
-from fastapi import Header
 
 @router.get("/{post_id}", response_class=HTMLResponse)
 async def post_detail(
@@ -72,8 +149,6 @@ async def post_detail(
             "is_authenticated": user is not None,
         },
     )
-
-
 
 @router.post("/{post_id}/like")
 async def like_post(

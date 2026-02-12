@@ -6,6 +6,8 @@ Home - Social Network
 {% endblock %}
 
 {% block content %}
+<div hx-get="/posts/create-box" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
+</div>
 <div id="feed" hx-get="/posts/feed" hx-trigger="load" hx-target="#feed" hx-swap="innerHTML">
 </div>
 {% endblock %}

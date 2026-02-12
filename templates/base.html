@@ -8,6 +8,7 @@
     <link href="{{ url_for('static', path='/css/output.css') }}" rel="stylesheet">
 
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <script src="{{ url_for('static', path='/js/app.js') }}" defer></script>
 
     <title>{% block title %}Social Network{% endblock %}</title>
 </head>
@@ -30,42 +31,13 @@
         <aside class="w-1/4">
             {% include "components/sidebar_right.html" %}
         </aside>
+    </div>
 
-        <div id="user-widget" hx-get="/auth/user-widget" hx-trigger="load">
-        </div>
+    <!-- USER WIDGET FLOATING -->
+    <div id="user-widget" class="fixed bottom-6 right-6" hx-get="/auth/user-widget" hx-trigger="load">
     </div>
 
     <div id="modal-container"></div>
-
-
-    <script>
-        document.body.addEventListener("htmx:afterOnLoad", function (evt) {
-
-            const url = window.location.pathname;
-
-            document.querySelectorAll(".nav-link").forEach(link => {
-                link.classList.remove("bg-gray-200");
-                if (link.getAttribute("hx-get") === url) {
-                    link.classList.add("bg-gray-200");
-                }
-            });
-
-        });
-
-        function setActiveMenu() {
-            const url = window.location.pathname;
-
-            document.querySelectorAll(".nav-link").forEach(link => {
-                link.classList.remove("bg-gray-200");
-                if (link.getAttribute("hx-get") === url) {
-                    link.classList.add("bg-gray-200");
-                }
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", setActiveMenu);
-        document.body.addEventListener("htmx:afterOnLoad", setActiveMenu);
-    </script>
 </body>
 
 </html>

@@ -1,28 +1,49 @@
 from uuid import uuid4
 from app.db.neo4j import get_driver
 
-def get_all_posts():
-    driver = get_driver()
-    records, _, _ = driver.execute_query(
-        """
-        MATCH (p:Post)
-        RETURN p.id as id, p.user as user, p.text as text, p.verified as verified
-        """,
-        database_="neo4j",
-    )
-    return records
-
-def create_post(user: str, text: str, verified: bool):
+def create_post(username: str, content: str, categories: list[str], media_urls: list[str]):
     driver = get_driver()
     post_id = str(uuid4())
-    driver.execute_query(
-        """
-        CREATE (p:Post {id: $id, user: $user, text: $text, verified: $verified})
-        """,
-        id=post_id, user=user, text=text, verified=verified,
+
+    query = """
+    MATCH (u:User {username: $username})
+
+    CREATE (p:Post {
+        id: $post_id,
+        content: $content,
+        created_at: datetime(),
+        updated_at: datetime(),
+        visibility: "public",
+        media_urls: $media_urls
+    })
+
+    MERGE (u)-[:CREATED]->(p)
+
+    WITH p
+    FOREACH (cat_name IN $categories |
+        MERGE (c:Category {name: cat_name})
+        MERGE (p)-[:IN_CATEGORY]->(c)
+    )
+    RETURN
+        p.id AS id,
+        p.content AS content,
+        p.created_at AS created_at,
+        p.media_urls AS media_urls,
+        $username AS author
+    """
+
+    records, _, _ = driver.execute_query(
+        query,
+        username=username,
+        post_id=post_id,
+        content=content,
+        categories=categories,
+        media_urls=media_urls,
         database_="neo4j",
     )
-    return post_id
+
+    return records[0]
+
 
 def update_post(post_id: str, text: str):
     driver = get_driver()

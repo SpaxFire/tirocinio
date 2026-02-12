@@ -11,7 +11,6 @@ async def optional_current_user_cookie(
 ) -> UserInDB | None:
     if not access_token:
         return None
-
     try:
         payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")

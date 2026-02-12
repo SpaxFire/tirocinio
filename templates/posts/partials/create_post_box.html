@@ -1,0 +1,42 @@
+<html lang="it">
+<div class="bg-white rounded-xl shadow p-4 mb-4">
+
+    <div id="post-success"></div>
+    <div id="post-errors"></div>
+
+    <form hx-post="/posts/create" hx-target="this" hx-swap="none" class="flex flex-col gap-3"
+        enctype="multipart/form-data">
+
+        <textarea name="content" placeholder="Cosa sta succedendo?" class="w-full border rounded-lg p-3 resize-none"
+            rows="3"></textarea>
+
+        <!-- upload immagini -->
+        <input type="file" name="media" multiple class="text-sm">
+
+        <!-- categorie -->
+        <div class="relative">
+
+            <input id="category-input" name="category_search" hx-get="/categories/search"
+                hx-trigger="click, input changed delay:400ms" hx-target="#category-results" hx-swap="innerHTML"
+                onblur="closeCategoryDropdown()" class="border rounded p-2 w-full" placeholder="Cerca categorie...">
+            <div id="category-results" data-dropdown data-trigger="category-input"
+                class="absolute bg-white rounded w-full mt-1 shadow">
+            </div>
+
+
+        </div>
+
+        <div id="selected-categories" class="flex gap-2 flex-wrap mt-2"></div>
+        <input type="hidden" name="categories" id="categories-hidden">
+
+
+        <div class="flex justify-end">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                Post
+            </button>
+        </div>
+
+    </form>
+</div>
+
+</html>

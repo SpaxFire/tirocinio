@@ -202,6 +202,7 @@ async def register_page(request: Request):
 
 @router.post("/register")
 async def register_user(
+    request: Request,
     username: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
@@ -210,19 +211,19 @@ async def register_user(
 
     user = user_crud.create_user(username, email, password_hash)
 
-    # username/email già esistenti
     if not user:
         return HTMLResponse(
             "<div class='text-red-500'>Username o email già registrati</div>"
         )
 
-    # successo
-    return HTMLResponse("""
-        <script>
-            document.getElementById('modal-container')?.innerHTML='';
-            window.location='/login';
-        </script>
-    """)
+    # mostra direttamente il login modal con messaggio
+    return templates.TemplateResponse(
+        "auth/login_modal.html",
+        {
+            "request": request,
+            "success_message": "Registrazione completata. Effettua il login."
+        },
+    )
 
 @router.post("/logout")
 async def logout():

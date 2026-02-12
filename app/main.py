@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from app.db.init_db import init_db
 from app.core.config import templates
 
-init_db()
+#init_db()
 
 from app.api.router import api_router
 
@@ -16,15 +16,18 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(api_router)
 
+# Gestione errori 401 per HTMX (utente non autenticato)
 @app.exception_handler(401)
 async def unauthorized_handler(request: Request, exc: HTTPException):
 
-    # se è richiesta HTMX → mostra modal login
     if request.headers.get("HX-Request"):
-        return templates.TemplateResponse(
+        response = templates.TemplateResponse(
             "auth/login_modal.html",
             {"request": request},
-            status_code=200
+            status_code=200,
         )
+        response.headers["HX-Retarget"] = "#modal-container"
+        response.headers["HX-Reswap"] = "innerHTML"
+        return response
 
     return HTMLResponse("Unauthorized", status_code=401)

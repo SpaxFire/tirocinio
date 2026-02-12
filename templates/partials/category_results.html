@@ -1,0 +1,11 @@
+{% for c in categories %}
+<div class="p-2 hover:bg-gray-100 cursor-pointer" onclick="selectCategory('{{ c.name }}')">
+    {{ c.name }}
+</div>
+{% endfor %}
+
+{% if categories|length == 0 %}
+<div class="p-2 text-gray-500">
+    Nessuna categoria trovata
+</div>
+{% endif %}
