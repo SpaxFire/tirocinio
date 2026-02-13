@@ -8,7 +8,10 @@
     <link href="{{ url_for('static', path='/css/output.css') }}" rel="stylesheet">
 
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <!-- JS personalizzato per funzionalità specifiche -->
     <script src="{{ url_for('static', path='/js/app.js') }}" defer></script>
+    <!-- Alpine.js per visualizzazione immagini -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <title>{% block title %}Social Network{% endblock %}</title>
 </head>
@@ -16,6 +19,7 @@
 <body hx-boost="true" class="bg-gray-100">
 
     <div class="max-w-7xl mx-auto flex gap-6 mt-6">
+        <div id="flash-container" class="fixed top-5 right-5 z-[9999] space-y-2"></div>
 
         <!-- SIDEBAR -->
         <aside class="w-1/4 sticky top-6 h-fit">

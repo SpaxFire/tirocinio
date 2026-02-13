@@ -1,9 +1,13 @@
-<div class="fixed inset-0 bg-black/50 flex items-center justify-center">
+<div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
 
     <div class="bg-white rounded-xl p-6 w-full max-w-md relative">
 
-        <button onclick="document.getElementById('modal-container').innerHTML=''" class="absolute top-3 right-3">
-            ✕
+        <button onclick="document.getElementById('modal-container').innerHTML=''"
+            class="absolute top-3 right-3 btn-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
         </button>
 
         {{ content | safe }}

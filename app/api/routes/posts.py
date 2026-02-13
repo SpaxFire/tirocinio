@@ -14,21 +14,6 @@ from app.schemas.user import UserInDB
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
-@router.get("", response_class=HTMLResponse)
-async def list_posts(
-    request: Request,
-    hx_request: Annotated[Union[str, None], Header()] = None
-):
-    records = post_crud.get_all_posts()
-    posts = [Post(**r) for r in records]
-
-    if hx_request:
-        return templates.TemplateResponse(
-            "posts/posts.html", {"request": request, "posts": posts}
-        )
-
-    return JSONResponse(content=jsonable_encoder(posts))
-
 @router.get("/create-box")
 async def create_post_box(request: Request):
     return templates.TemplateResponse(
@@ -49,14 +34,15 @@ async def create_post(
     try:
         if not content.strip():
             return HTMLResponse("""
-            <div id="post-success" hx-swap-oob="true"></div>
-
-            <div id="post-errors" hx-swap-oob="true"
-                class="text-red-500 text-sm mb-2">
-                Il contenuto del post è obbligatorio
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-danger"
+                    hx-get="/empty"
+                    hx-trigger="load delay:4s"
+                    hx-swap="delete">
+                    Il contenuto del post è obbligatorio
+                </div>
             </div>
             """)
-
 
         category_list = []
         if categories:
@@ -72,49 +58,46 @@ async def create_post(
         )
 
         return HTMLResponse("""
-        <div id="post-errors" hx-swap-oob="true"></div>
-
-        <div id="post-success"
-            hx-swap-oob="true"
-            hx-get="/posts/empty"
-            hx-trigger="load delay:3s"
-            hx-swap="outerHTML"
-            class="bg-green-100 text-green-700 p-2 rounded mb-2">
-            Post pubblicato con successo
+        <div id="flash-container" hx-swap-oob="innerHTML">
+            <div class="msg-success"
+                hx-get="/empty"
+                hx-trigger="load delay:3s"
+                hx-swap="delete">
+                Post pubblicato con successo
+            </div>
         </div>
-
+                                    
         <div id="feed"
             hx-get="/posts/feed"
             hx-trigger="load"
             hx-swap="innerHTML"
             hx-swap-oob="true">
         </div>
-""")
+        """)
 
 
 
     except Exception as e:
         return HTMLResponse(f"""
-        <div id="post-success" hx-swap-oob="true"></div>
-
-        <div id="post-errors" hx-swap-oob="true"
-             class="text-red-500 text-sm mb-2">
-             {str(e)}
+        <div id="flash-container" hx-swap-oob="innerHTML">
+            <div class="msg-danger"
+                hx-get="/empty"
+                hx-trigger="load delay:4s"
+                hx-swap="delete">
+                {str(e)}
+            </div>
         </div>
         """)
-
-@router.get("/empty")
-async def empty():
-    return HTMLResponse("""<div id="post-success"></div>""")
 
 @router.get("/feed", response_class=HTMLResponse)
 async def post_feed(
     request: Request,
     page: int = 0,
-    page_size: int = 10
+    page_size: int = 10,
+    user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
     skip = page * page_size
-    posts = await post_crud.get_posts_paginated(skip, page_size)
+    posts = await post_crud.get_posts_paginated(skip, page_size, user.id if user else None)
 
     return templates.TemplateResponse(
         "posts/feed.html",
@@ -133,7 +116,7 @@ async def post_detail(
     user: UserInDB | None = Depends(optional_current_user_cookie),
     hx_request: Annotated[Union[str, None], Header()] = None,
 ):
-    post = post_crud.get_post_by_id(post_id)
+    post = post_crud.get_post_by_id(post_id, user.id if user else None)
 
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -150,16 +133,23 @@ async def post_detail(
         },
     )
 
-@router.post("/{post_id}/like")
+@router.post("/{post_id}/likes")
 async def like_post(
     request: Request,
     post_id: str,
-    user: UserInDB | None = Depends(require_user_cookie),
+    user: UserInDB = Depends(require_user_cookie),
 ):
-    post_crud.like_post(post_id, user.username)
+    liked, like_count = post_crud.toggle_like(post_id, user.username)
 
-    return HTMLResponse("")   # nessun modale
-
+    return templates.TemplateResponse(
+        "posts/partials/like_button.html",
+        {
+            "request": request,
+            "post_id": post_id,
+            "liked": liked,
+            "like_count": like_count,
+        },
+    )
 
 @router.get("/{post_id}/comment-form")
 async def comment_form(

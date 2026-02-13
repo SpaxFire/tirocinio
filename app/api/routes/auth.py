@@ -159,9 +159,15 @@ async def login_htmx(
 
     # errore → solo messaggio
     if not user:
-        return HTMLResponse(
-            "<div class='text-red-500'>Credenziali errate</div>"
-        )
+        return HTMLResponse("""
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-danger"
+                    hx-on::load="setTimeout(() => this.remove(), 4000)">
+                    Credenziali errate
+                </div>
+            </div>
+        """)
+
 
     access_token = create_access_token(
         data={"sub": user.username, "role": user.role},
@@ -212,18 +218,27 @@ async def register_user(
     user = user_crud.create_user(username, email, password_hash)
 
     if not user:
-        return HTMLResponse(
-            "<div class='text-red-500'>Username o email già registrati</div>"
-        )
+        return HTMLResponse("""
+        <div id="flash-container" hx-swap-oob="innerHTML">
+            <div class="msg-danger"
+                hx-on::load="setTimeout(() => this.remove(), 4000)">
+                Username o email già registrati
+            </div>
+        </div>
+        """)
 
     # mostra direttamente il login modal con messaggio
-    return templates.TemplateResponse(
-        "auth/login_modal.html",
-        {
-            "request": request,
-            "success_message": "Registrazione completata. Effettua il login."
-        },
+    html = templates.get_template("auth/login_modal.html").render(
+        request=request,
+        success_message="Registrazione completata. Effettua il login."
     )
+
+    return HTMLResponse(f"""
+    <div id="modal-container" hx-swap-oob="innerHTML">
+    {html}
+    </div>
+    """)
+
 
 @router.post("/logout")
 async def logout():

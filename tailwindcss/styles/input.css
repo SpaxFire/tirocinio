@@ -36,4 +36,37 @@
     .comment {
         @apply text-sm text-gray-600;
     }
+
+    .btn {
+        @apply px-3 py-1.5 rounded-xl transition;
+    }
+
+    .btn-icon {
+        @apply flex items-center gap-1 px-2 py-1 rounded-xl transition hover:bg-gray-50;
+    }
+
+    .btn-ghost {
+        @apply hover:bg-gray-50;
+    }
+
+    .btn-primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700 rounded-lg;
+    }
+
+    .btn-success {
+        @apply bg-green-600 text-white hover:bg-green-700 rounded-lg;
+    }
+
+    .btn-danger {
+        @apply text-red-600 hover:bg-red-50 rounded-lg;
+    }
+
+    .msg-success {
+        @apply text-green-600 bg-green-50 p-3 mb-3 rounded-lg;
+    }
+
+    .msg-danger {
+        @apply text-red-600 bg-red-50 p-3 mb-3 rounded-lg;
+    }
+
 }

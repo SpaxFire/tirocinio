@@ -1,31 +1,128 @@
-<a href="/posts/{{ post.id }}" hx-target="#main-content" hx-push-url="true"
-    class="block bg-white rounded-xl shadow p-4 mb-4 hover:bg-gray-50 transition">
+<div class="relative bg-white rounded-xl shadow p-4 mb-4  hover:bg-gray-50 transition">
 
-    <div class="flex justify-between items-center">
-        <span class="font-semibold text-gray-800">
-            {{ post.author }}
-        </span>
-        <span class="text-sm text-gray-500">
-            {{ post.created_at }}
-        </span>
+    <!-- LINK OVERLAY -->
+    <a href="/posts/{{ post.id }}" hx-target="#main-content" hx-push-url="true" class="absolute inset-0 z-10 rounded-xl"
+        aria-label="Apri post"></a>
+
+    <!-- CONTENUTO -->
+    <div class="">
+
+        <div class="flex justify-between items-center">
+            <span class="font-semibold text-gray-800">
+                {{ post.author }}
+            </span>
+            <span class="text-sm text-gray-500">
+                {{ post.created_at }}
+            </span>
+        </div>
+
+        <p class="mt-2 text-gray-700">
+            {{ post.content }}
+        </p>
+
+        {% if post.media_urls %}
+        {% set n = post.media_urls|length %}
+
+        <div x-data="{ open: false, index: 0 }" class="mt-4">
+
+            <!-- PREVIEW GRID -->
+            <div class="grid grid-cols-2 gap-2 auto-rows-[200px] relative z-20">
+
+                {% if n == 1 %}
+                <!-- principale -->
+                <div class="overflow-hidden rounded-xl col-span-2 row-span-2 cursor-pointer"
+                    @click="open = true; index = 0">
+                    <img src="{{ post.media_urls[0] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                {% elif n == 2 %}
+                <!-- principale -->
+                <div class="overflow-hidden rounded-xl row-span-2 cursor-pointer" @click="open = true; index = 0">
+                    <img src="{{ post.media_urls[0] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div class="overflow-hidden rounded-xl row-span-2 cursor-pointer" @click="open = true; index = 1">
+                    <img src="{{ post.media_urls[1] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+
+                {% elif n > 2 %}
+                <!-- principale -->
+                <div class="overflow-hidden rounded-xl row-span-2 cursor-pointer" @click="open = true; index = 0">
+                    <img src="{{ post.media_urls[0] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div class="overflow-hidden rounded-xl cursor-pointer" @click="open = true; index = 1">
+                    <img src="{{ post.media_urls[1] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div class="relative overflow-hidden rounded-xl cursor-pointer" @click="open = true; index = 2">
+                    <img src="{{ post.media_urls[2] }}" class="w-full h-full object-cover rounded-xl">
+
+                    {% if n > 3 %}
+                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span class="text-white text-2xl font-bold">
+                            +{{ n - 3 }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- LIGHTBOX -->
+            <div x-show="open" x-transition class="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+                @click.self="open = false">
+
+                <!-- Close -->
+                <button @click="open = false" class="absolute top-5 right-5 text-white text-3xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <!-- Prev -->
+                <button @click="index = (index - 1 + {{ n }}) % {{ n }}" class="absolute left-5 text-white text-3xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+
+                <!-- Image -->
+                <img :src="[
+            {% for media in post.media_urls %}
+            '{{ media }}',
+            {% endfor %}
+        ][index]" class="max-h-[90vh] max-w-[90vw] object-contain">
+
+                <!-- Next -->
+                <button @click="index = (index + 1) % {{ n }}" class="absolute right-5 text-white text-3xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+            </div>
+
+        </div>
+        {% endif %}
+
+        <div class="flex gap-6 mt-4 text-sm text-gray-600">
+            <!-- LIKE sopra il link alla pagina del post -->
+            <div id="like-btn-{{ post.id }}" class="relative z-30">
+                {% with
+                post_id=post.id,
+                liked=post.liked_by_me,
+                like_count=post.like_count
+                %}
+                {% include "posts/partials/like_button.html" %}
+                {% endwith %}
+            </div>
+
+            <!-- COMMENT sopra il link -->
+            <button hx-get="/posts/{{ post.id }}/comment-form" hx-target="#modal-container" hx-swap="innerHTML"
+                hx-trigger="click consume" class="relative z-30 flex items-center gap-1 px-2 py-1">
+                💬 {{ post.comment_count }}
+            </button>
+        </div>
+
     </div>
-
-    <p class="mt-2 text-gray-700">
-        {{ post.content }}
-    </p>
-
-    {% if post.media %}
-    <img src="{{ post.media[0] }}" class="mt-3 rounded-lg max-h-64 object-cover">
-    {% endif %}
-
-    <div class="flex gap-6 mt-4 text-sm text-gray-600">
-        <button hx-post="/posts/{{ post.id }}/like" hx-trigger="click" hx-target="#modal-container" hx-swap="innerHTML"
-            class="flex items-center gap-1">
-            ❤️ {{ post.like_count }}
-        </button>
-        <button hx-get="/posts/{{ post.id }}/comment-form" hx-target="#modal-container" hx-swap="innerHTML"
-            class="flex items-center gap-1">
-            💬 {{ post.comment_count }}
-        </button>
-    </div>
-</a>
+</div>

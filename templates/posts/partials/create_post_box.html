@@ -1,9 +1,6 @@
 <html lang="it">
 <div class="bg-white rounded-xl shadow p-4 mb-4">
 
-    <div id="post-success"></div>
-    <div id="post-errors"></div>
-
     <form hx-post="/posts/create" hx-target="this" hx-swap="none" class="flex flex-col gap-3"
         enctype="multipart/form-data">
 
@@ -31,7 +28,7 @@
 
 
         <div class="flex justify-end">
-            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+            <button class="btn-primary px-4 py-2">
                 Post
             </button>
         </div>

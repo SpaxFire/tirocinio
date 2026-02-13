@@ -1,18 +1,25 @@
 {% set content %}
 <h2 class="text-lg font-semibold mb-4">Registrazione</h2>
 
-<form hx-post="/register" hx-target="#form-error" hx-swap="innerHTML" class="space-y-3">
+<form hx-post="/register" hx-swap="none" class="space-y-3">
 
     <input name="username" placeholder="Username" class="w-full border rounded p-2">
     <input name="email" placeholder="Email" class="w-full border rounded p-2">
     <input type="password" name="password" placeholder="Password" class="w-full border rounded p-2">
 
-    <button class="w-full bg-green-600 text-white rounded p-2">
+    <button class="w-full btn-success p-2">
         Registrati
     </button>
-
-    <div id="form-error"></div>
 </form>
+<div class="mt-6 text-center">
+    <div class="border-t pt-4 text-sm text-gray-600">
+        Hai già un account?
+    </div>
+
+    <button hx-get="/login/modal" hx-target="#modal-container" hx-swap="innerHTML" class="mt-3 w-full btn btn-ghost">
+        Torna al login
+    </button>
+</div>
 {% endset %}
 
 {% include "components/modal.html" with context %}

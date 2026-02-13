@@ -1,24 +1,26 @@
 {% set content %}
 <h2 class="text-lg font-semibold mb-4">Login</h2>
 {% if success_message %}
-<div class="bg-green-100 text-green-700 p-3 rounded mb-3">
+<div class="msg-success">
     {{ success_message }}
 </div>
 {% endif %}
-<form hx-post="/login" hx-target="#form-error" hx-swap="innerHTML" class="space-y-3">
+<form hx-post="/login" hx-swap="none" class="space-y-3">
     <input name="username" class="w-full border rounded p-2">
     <input type="password" name="password" class="w-full border rounded p-2">
 
-    <button class="w-full bg-blue-600 text-white rounded p-2">
+    <button class="w-full btn-primary p-2">
         Login
     </button>
-
-    <div id="form-error"></div>
 </form>
-
-<button hx-get="/register/modal" hx-target="#modal-container" hx-swap="innerHTML">
-    Registrati
-</button>
+<div class="mt-6 text-center">
+    <div class="border-t pt-4 text-sm text-gray-600">
+        Non hai un account?
+    </div>
+    <button hx-get="/register/modal" hx-target="#modal-container" hx-swap="innerHTML" class="mt-3 w-full btn btn-ghost">
+        Registrati
+    </button>
+</div>
 {% endset %}
 
 {% include "components/modal.html" %}

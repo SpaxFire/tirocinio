@@ -23,3 +23,7 @@ async def index(
         request,
         "home.html"
     )
+
+@router.get("/empty")
+async def empty():
+    return HTMLResponse("")
