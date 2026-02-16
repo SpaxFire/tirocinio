@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 class UserBase(BaseModel):
@@ -6,8 +7,11 @@ class UserBase(BaseModel):
     email: str | None = None
 
 class UserPublic(UserBase):
+    created_at: datetime
+    role: str
     bio: str | None = None
     profile_image: str | None = None
+    is_active: bool
 
 class UserInDB(UserBase):
     password_hash: str

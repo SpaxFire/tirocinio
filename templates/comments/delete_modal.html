@@ -1,0 +1,17 @@
+{% set content %}
+<h2 class="text-lg font-semibold mb-4">Elimina commento</h2>
+<p class="mb-4">Sei sicuro di voler eliminare questo commento?</p>
+
+<div class="flex justify-end gap-2">
+    <form hx-post="/comments/{{ comment.id }}/delete" hx-target="#modal-container" hx-swap="innerHTML">
+
+        <input type="hidden" name="source" value="{{ source }}">
+
+        <button type="submit" class="btn-danger px-4 py-2">
+            Elimina
+        </button>
+    </form>
+</div>
+{% endset %}
+
+{% include "components/modal.html" %}

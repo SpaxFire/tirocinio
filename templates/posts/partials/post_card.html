@@ -1,0 +1,160 @@
+<div id="post-{{ post.id }}" hx-get="/posts/{{ post.id }}" hx-target="#main-content" hx-push-url="true" class="group relative bg-white rounded-xl shadow p-4 mb-4
+            hover:bg-gray-50 transition cursor-pointer">
+
+    <!-- CONTENUTO -->
+    <div>
+        <div class="flex justify-between items-center">
+            <span class="font-semibold text-gray-800">
+                {{ post.author }}
+            </span>
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-gray-500">
+                    {{ post.created_at }}
+                </span>
+
+                {% set user = current_user(request) %}
+                {% if user and user.username == post.author %}
+
+                <button hx-get="/posts/{{ post.id }}/edit-modal?source=feed" hx-target="#modal-container"
+                    hx-swap="innerHTML" hx-trigger="click consume" class="relative z-30 btn-icon opacity-0 group-hover:opacity-100
+       transition-opacity duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M16.862 3.487a2.25 2.25 0 0 1 3.182 3.182L7.5 19.213l-4 1 1-4 12.362-12.362z" />
+                    </svg>
+                </button>
+
+                <button hx-get="/posts/{{ post.id }}/delete-modal?source=feed" hx-target="#modal-container"
+                    hx-swap="innerHTML" hx-trigger="click consume" class="relative z-30 btn-icon-danger opacity-0 group-hover:opacity-100
+       transition-opacity duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <p class="mt-2 text-gray-700">
+            {{ post.content }}
+        </p>
+
+        {% if post.media_urls %}
+        {% set n = post.media_urls|length %}
+
+        <div x-data="{ open: false, index: 0 }" class="mt-4" @click.stop>
+
+            <!-- PREVIEW GRID -->
+            <div class="grid grid-cols-2 gap-2 auto-rows-[200px] relative z-20">
+
+                {% if n == 1 %}
+                <!-- principale -->
+                <div class="overflow-hidden rounded-xl col-span-2 row-span-2 cursor-pointer"
+                    @click.stop="open = true; index = 0">
+                    <img src="{{ post.media_urls[0] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                {% elif n == 2 %}
+                <!-- principale -->
+                <div class="overflow-hidden rounded-xl row-span-2 cursor-pointer" @click.stop="open = true; index = 0">
+                    <img src="{{ post.media_urls[0] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div class="overflow-hidden rounded-xl row-span-2 cursor-pointer" @click.stop="open = true; index = 1">
+                    <img src="{{ post.media_urls[1] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+
+                {% elif n > 2 %}
+                <!-- principale -->
+                <div class="overflow-hidden rounded-xl row-span-2 cursor-pointer" @click.stop="open = true; index = 0">
+                    <img src="{{ post.media_urls[0] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div class="overflow-hidden rounded-xl cursor-pointer" @click.stop="open = true; index = 1">
+                    <img src="{{ post.media_urls[1] }}" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div class="relative overflow-hidden rounded-xl cursor-pointer" @click.stop="open = true; index = 2">
+                    <img src="{{ post.media_urls[2] }}" class="w-full h-full object-cover rounded-xl">
+
+                    {% if n > 3 %}
+                    <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span class="text-white text-2xl font-bold">
+                            +{{ n - 3 }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- LIGHTBOX -->
+            <div x-show="open" x-transition class="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+                @click.self="open = false">
+
+                <!-- Close -->
+                <button @click="open = false" class="absolute top-5 right-5 text-white text-3xl btn-ghost-lightbox">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <!-- Prev -->
+                {% if n > 1 %}
+                <button @click="index = (index - 1 + {{ n }}) % {{ n }}"
+                    class="absolute left-5 text-white text-3xl  btn-ghost-lightbox">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+                {% endif %}
+
+                <!-- Image -->
+                <img :src="[{% for media in post.media_urls %} '{{ media }}', {% endfor %}][index]"
+                    class="max-h-[90vh] max-w-[90vw] object-contain">
+
+                <!-- Next -->
+                {% if n > 1 %}
+                <button @click="index = (index + 1) % {{ n }}"
+                    class="absolute right-5 text-white text-3xl btn-ghost-lightbox">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endif %}
+
+        <div class="flex gap-6 mt-4 text-sm text-gray-600">
+            <!-- LIKE sopra il link alla pagina del post -->
+            <div id="like-btn-{{ post.id }}" class="relative z-30">
+                {% with
+                post_id=post.id,
+                liked=post.liked_by_me,
+                like_count=post.like_count
+                %}
+                {% include "posts/partials/like_button.html" %}
+                {% endwith %}
+            </div>
+
+            <div id="comment-btn-wrapper-{{ post.id }}" class="relative z-30">
+                {% with
+                post_id=post.id,
+                comment_count=post.comment_count,
+                commented_by_me=post.commented_by_me,
+                source="feed"
+                %}
+                {% include "posts/partials/comment_button.html" %}
+                {% endwith %}
+            </div>
+        </div>
+        <div id="comments-{{ post.id }}" hx-get="/posts/{{ post.id }}/comments" hx-trigger="revealed" hx-target="this"
+            hx-swap="innerHTML" hx-push-url="false" class="mt-4 text-sm space-y-2 relative z-30">
+        </div>
+    </div>
+</div>

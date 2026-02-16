@@ -1,0 +1,18 @@
+{% set content %}
+<h2 class="text-lg font-semibold mb-4">Modifica commento</h2>
+
+<form hx-post="/comments/{{ comment.id }}/update" hx-target="this" hx-swap="none" class="flex flex-col gap-3">
+
+    <input type="hidden" name="source" value="{{ source }}">
+
+    <textarea name="content" class="w-full border rounded-lg p-3 resize-none" rows="3">{{ comment.text }}</textarea>
+
+    <div class="flex justify-end">
+        <button type="submit" class="btn-primary px-4 py-2">
+            Salva
+        </button>
+    </div>
+</form>
+{% endset %}
+
+{% include "components/modal.html" %}

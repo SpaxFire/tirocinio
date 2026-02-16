@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import jwt
 
 from app.core.dependencies import optional_current_user_cookie
-from app.core.render import render
 from app.schemas.user import UserInDB, UserPublic
 from app.schemas.token import Token
 from app.db import user as user_crud
@@ -103,7 +102,6 @@ async def get_current_active_user(
 
 # utilizzato per le azione che richiedono autenticazione, ma non è necessario bloccare l'accesso se il token non è valido (es. like post, commentare)
 async def require_user_cookie(
-    request: Request,
     user: UserInDB | None = Depends(optional_current_user_cookie),
 ):
     if not user:
@@ -174,12 +172,12 @@ async def login_htmx(
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
-    html = HTMLResponse("""
+    html = HTMLResponse(f"""
         <div id="modal-container" hx-swap-oob="true"></div>
-                        
         <div id="user-widget" hx-get="/auth/user-widget" hx-trigger="load" hx-swap-oob="true"></div>
-        <script>window.location.reload()</script>
+        <div id="feed" hx-get="/posts/feed" hx-trigger="load" hx-target="#feed" hx-swap="innerHTML" hx-swap-oob="true"></div>
     """)
+
 
     html.set_cookie(
         key="access_token",
@@ -217,6 +215,8 @@ async def register_user(
 
     user = user_crud.create_user(username, email, password_hash)
 
+    # l'eliminazione del messaggio di errore è gestita direttamente nel template del modal tramite hx-on:load,
+    # senza usare l'endpoint di empty come per gli altri modali (a scopo dimostrativo di un approccio alternativo)
     if not user:
         return HTMLResponse("""
         <div id="flash-container" hx-swap-oob="innerHTML">
@@ -250,9 +250,18 @@ async def logout():
     response.delete_cookie("access_token")
     return response
 
-@router.get("/auth/user-widget")
+@router.get("/auth/user-widget", response_class=HTMLResponse)
 async def user_widget(request: Request):
-    return await render(request, "components/user_widget.html")
+    """
+    Widget utente flottante in basso a sinistra:
+    - se autenticato → mostra avatar e logout
+    - se guest → mostra pulsante login
+    """
+    return templates.TemplateResponse(
+        "components/user_widget.html",
+        {"request": request}
+    )
+
 
 @router.get("/users/me", response_model=UserPublic)
 async def read_users_me(

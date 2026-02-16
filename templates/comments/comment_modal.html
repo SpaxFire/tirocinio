@@ -1,0 +1,20 @@
+{% set content %}
+
+<h2 class="text-lg font-semibold mb-4">Scrivi un commento</h2>
+
+<form hx-post="/posts/{{ post.id }}/comments" hx-target="this" hx-swap="none" class="flex flex-col gap-3">
+
+    <!-- per sapere da dove proviene il commento -->
+    <input type="hidden" name="source" value="{{ source }}">
+
+    <textarea name="content" placeholder="Scrivi il tuo commento..." rows="4"
+        class="w-full border rounded-lg p-3 resize-none"></textarea>
+
+    <div class="flex justify-end mt-4">
+        <button type="submit" class="btn-primary px-4 py-2">Pubblica</button>
+    </div>
+
+</form>
+
+{% endset %}
+{% include "components/modal.html" %}

@@ -1,5 +1,6 @@
 from uuid import uuid4
 from app.db.neo4j import get_driver
+from neo4j.time import DateTime as Neo4jDateTime
 
 def create_post(username: str, content: str, categories: list[str], media_urls: list[str]):
     driver = get_driver()
@@ -45,13 +46,46 @@ def create_post(username: str, content: str, categories: list[str], media_urls: 
     return records[0]
 
 
-def update_post(post_id: str, text: str):
+def update_post(post_id: str, content: str, categories: list[str], media_urls: list[str]):
     driver = get_driver()
-    driver.execute_query(
-        "MATCH (p:Post {id: $id}) SET p.text = $text",
-        id=post_id, text=text,
-        database_="neo4j",
-    )
+    with driver.session() as session:
+        # aggiorna contenuto e media
+        session.run(
+            """
+            MATCH (p:Post {id: $post_id})
+            SET p.content = $content,
+                p.updated_at = datetime(),
+                p.media_urls = $media_urls
+            """,
+            post_id=post_id,
+            content=content,
+            media_urls=media_urls
+        )
+
+        # rimuove vecchi archi IN_CATEGORY
+        session.run(
+            """
+            MATCH (p:Post {id: $post_id})-[r:IN_CATEGORY]->()
+            DELETE r
+            """,
+            post_id=post_id
+        )
+
+        # aggiunge nuove categorie
+        for cat in categories:
+            session.run(
+                """
+                MERGE (c:Category {name: $cat})
+                WITH c
+                MATCH (p:Post {id: $post_id})
+                MERGE (p)-[:IN_CATEGORY]->(c)
+                """,
+                post_id=post_id,
+                cat=cat
+            )
+
+    return get_post_by_id(post_id, None)
+
 
 def delete_post(post_id: str):
     driver = get_driver()
@@ -105,12 +139,16 @@ async def get_posts_paginated(skip: int, limit: int, user_id: str | None):
         MATCH (u:User)-[:CREATED]->(p:Post)
 
         OPTIONAL MATCH (p)<-[:LIKES]-(liker:User)
-        WITH u, p, count(liker) AS like_count
+        WITH u, p, count(DISTINCT liker) AS like_count
 
         OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
-        WITH u, p, like_count, count(c) AS comment_count
+        WITH u, p, like_count, count(DISTINCT c) AS comment_count
 
-        OPTIONAL MATCH (me:User {id: $user_id})-[ml:LIKES]->(p)
+        OPTIONAL MATCH (me:User {id: $user_id})
+        OPTIONAL MATCH (me)-[ml:LIKES]->(p)
+        OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+
+        WITH u, p, like_count, comment_count, ml, count(DISTINCT myComment) AS my_comments
 
         ORDER BY p.created_at DESC
         SKIP $skip
@@ -124,14 +162,29 @@ async def get_posts_paginated(skip: int, limit: int, user_id: str | None):
             u.username  AS author,
             like_count,
             comment_count,
-            CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me
+            CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me,
+            CASE WHEN my_comments > 0 THEN true ELSE false END AS commented_by_me
         """,
         skip=skip,
         limit=limit,
         user_id=user_id,
         database_="neo4j",
     )
-    return records
+
+    formatted = []
+
+    for record in records:
+        post = dict(record)
+        created_at = post["created_at"]
+
+        if isinstance(created_at, Neo4jDateTime):
+            created_at = created_at.to_native()
+
+        post["created_at"] = created_at.strftime("%d %b %Y • %H:%M")
+
+        formatted.append(post)
+
+    return formatted
 
 def get_post_by_id(post_id: str, user_id: str | None) -> dict | None:
     query = """
@@ -140,20 +193,27 @@ def get_post_by_id(post_id: str, user_id: str | None) -> dict | None:
     OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
     OPTIONAL MATCH (p)<-[:LIKES]-(l:User)
 
-    WITH p, u, count(DISTINCT c) AS comment_count,
-         count(DISTINCT l) AS like_count
+    WITH p, u,
+        count(DISTINCT c) AS comment_count,
+        count(DISTINCT l) AS like_count
 
-    // gestiamo user_id null in modo sicuro
-    OPTIONAL MATCH (me:User)-[ml:LIKES]->(p)
-        WHERE me.id = $user_id
+    OPTIONAL MATCH (me:User {id: $user_id})
+    OPTIONAL MATCH (me)-[ml:LIKES]->(p)
+    OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+
+    WITH p, u, comment_count, like_count, ml,
+        count(myComment) AS my_comments
 
     RETURN
         p,
         u.username AS author,
         comment_count,
         like_count,
-        CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me
+        CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me,
+        CASE WHEN my_comments > 0 THEN true ELSE false END AS commented_by_me,
+        p.created_at AS created_at
     """
+
 
     with get_driver().session() as session:
         record = session.run(
@@ -166,15 +226,25 @@ def get_post_by_id(post_id: str, user_id: str | None) -> dict | None:
             return None
 
         p = record["p"]
+        created_at = record["created_at"]
+
+        # Converto Neo4jDateTime in datetime Python e formatto come stringa
+        if isinstance(created_at, Neo4jDateTime):
+            created_at = created_at.to_native()
+
+        created_at_str = created_at.strftime("%d %b %Y • %H:%M")
 
         return {
-            "id": p["id"],
-            "content": p["content"],
-            "media_urls": p.get("media_urls", []),
-            "author": record["author"],
-            "comment_count": record["comment_count"],
-            "like_count": record["like_count"],
-            "liked_by_me": record["liked_by_me"],
-        }
+        "id": p["id"],
+        "content": p["content"],
+        "media_urls": p.get("media_urls", []),
+        "author": record["author"],
+        "comment_count": record["comment_count"],
+        "like_count": record["like_count"],
+        "liked_by_me": record["liked_by_me"],
+        "commented_by_me": record["commented_by_me"],
+        "created_at": created_at_str,
+    }
+
 
 

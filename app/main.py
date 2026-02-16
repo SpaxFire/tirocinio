@@ -1,22 +1,43 @@
-from http.client import HTTPException
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.db.init_db import init_db
 from app.core.config import templates
-
-#init_db()
-
+from app.core.dependencies import optional_current_user_cookie
 from app.api.router import api_router
 
 app = FastAPI()
 
+# MIDDLEWARE PER current_user
+class CurrentUserMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+
+        access_token = request.cookies.get("access_token")
+
+        user = await optional_current_user_cookie(access_token)
+
+        request.state.user = user  # disponibile ovunque
+
+        response = await call_next(request)
+        return response
+
+
+app.add_middleware(CurrentUserMiddleware)
+
+
+# STATIC
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# ROUTER
 app.include_router(api_router)
 
-# Gestione errori 401 per HTMX (utente non autenticato)
+
+# RENDIAMO current_user GLOBALE NEI TEMPLATE
+templates.env.globals["current_user"] = lambda request: request.state.user
+
+
+# Gestione errori 401 per HTMX
 @app.exception_handler(401)
 async def unauthorized_handler(request: Request, exc: HTTPException):
 

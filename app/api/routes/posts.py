@@ -33,6 +33,9 @@ async def create_post(
 ):
     try:
         if not content.strip():
+            # l'eliminazione del messaggio di errore è gestita usando l'endpoint di empty
+            # per dimostrare un approccio alternativo a quello usato nel modale di auth
+            # (dove invece l'eliminazione è gestita tramite hx-on:load direttamente nel template)
             return HTMLResponse("""
             <div id="flash-container" hx-swap-oob="innerHTML">
                 <div class="msg-danger"
@@ -88,6 +91,200 @@ async def create_post(
             </div>
         </div>
         """)
+    
+@router.get("/{post_id}/edit-modal", response_class=HTMLResponse)
+async def edit_post_modal(
+    post_id: str,
+    request: Request,
+    source: str = "feed",
+    user: UserInDB | None = Depends(optional_current_user_cookie)
+):
+    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post non trovato")
+
+    # controllo che l'utente sia l'autore del post
+    if not user or user.username != post["author"]:
+        raise HTTPException(status_code=403, detail="Permesso negato")
+
+    return templates.TemplateResponse(
+        "posts/edit_modal.html",
+        {
+            "request": request,
+            "post": post,
+            "source": source
+        }
+    )
+
+@router.post("/{post_id}/update", response_class=HTMLResponse)
+async def update_post(
+    post_id: str,
+    request: Request,
+    content: str = Form(""),
+    media: list[UploadFile] | None = File(None),
+    existing_media: str = Form(""),
+    categories: str = Form(""),
+    source: str = Form("feed"),
+    user: UserInDB | None = Depends(optional_current_user_cookie)
+):
+    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    if not post:
+        raise HTTPException(status_code=404)
+
+    if not user or user.username != post["author"]:
+        raise HTTPException(status_code=403)
+    
+    if not content.strip():
+            # l'eliminazione del messaggio di errore è gestita usando l'endpoint di empty
+            # per dimostrare un approccio alternativo a quello usato nel modale di auth
+            # (dove invece l'eliminazione è gestita tramite hx-on:load direttamente nel template)
+            return HTMLResponse("""
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-danger"
+                    hx-get="/empty"
+                    hx-trigger="load delay:4s"
+                    hx-swap="delete">
+                    Il contenuto del post è obbligatorio
+                </div>
+            </div>
+            """)
+
+    categories_list = [c.strip() for c in categories.split(",") if c.strip()]
+
+    existing_media_list = [
+        m.strip() for m in existing_media.split(",") if m.strip()
+    ]
+
+    if media:
+        new_media_urls = await save_post_media(media)
+    else:
+        new_media_urls = []
+
+    media_urls = existing_media_list + new_media_urls
+
+    post_crud.update_post(post_id, content, categories_list, media_urls)
+
+    updated_post = post_crud.get_post_by_id(post_id, user.id)
+
+    # render corretto in base alla provenienza
+    if source == "detail":
+        html = templates.get_template("posts/partials/detail_content.html").render(
+            {"request": request, "post": updated_post, "user": user}
+        )
+
+        return HTMLResponse(
+            f"""
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-success"
+                    hx-get="/empty"
+                    hx-trigger="load delay:3s"
+                    hx-swap="delete">
+                    Post modificato con successo
+                </div>
+            </div>
+
+            <div id="modal-container" hx-swap-oob="true"></div>
+            <div id="post-detail" hx-swap-oob="true">
+                {html}
+            </div>
+            """
+        )
+
+    else:  # feed
+        html = templates.get_template("posts/partials/post_card.html").render(
+            {"request": request, "post": updated_post}
+        )
+
+        return HTMLResponse(
+            f"""
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-success"
+                    hx-get="/empty"
+                    hx-trigger="load delay:3s"
+                    hx-swap="delete">
+                    Post modificato con successo
+                </div>
+            </div>
+
+            <div id="modal-container" hx-swap-oob="true"></div>
+            <div id="post-{post_id}" hx-swap-oob="true">
+                {html}
+            </div>
+            """
+        )
+
+
+# MODALE DELETE
+@router.get("/{post_id}/delete-modal", response_class=HTMLResponse)
+async def delete_post_modal(
+    post_id: str,
+    request: Request,
+    source: str = "feed",
+    user: UserInDB | None = Depends(optional_current_user_cookie)
+):
+    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post non trovato")
+
+    if not user or user.username != post["author"]:
+        raise HTTPException(status_code=403, detail="Permesso negato")
+
+    return templates.TemplateResponse(
+        "posts/delete_modal.html",  # template del modale
+        {
+            "request": request,
+            "post": post,
+            "source": source
+        }
+    )
+
+# DELETE POST
+@router.post("/{post_id}/delete", response_class=HTMLResponse)
+async def delete_post(
+    post_id: str,
+    request: Request,
+    source: str = Form("feed"),
+    user: UserInDB | None = Depends(optional_current_user_cookie)
+):
+    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    if not post:
+        raise HTTPException(status_code=404)
+
+    if not user or user.username != post["author"]:
+        raise HTTPException(status_code=403)
+
+    post_crud.delete_post(post_id)
+
+    # risposta HTMX con flash e rimozione modal
+    flash_html = """
+    <div id="flash-container" hx-swap-oob="innerHTML">
+        <div class="msg-success"
+            hx-get="/empty"
+            hx-trigger="load delay:3s"
+            hx-swap="delete">
+            Post eliminato con successo
+        </div>
+    </div>
+    """
+
+    if source == "detail":
+        response = HTMLResponse("""
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-success">
+                    Post eliminato con successo
+                </div>
+            </div>
+        """)
+        response.headers["HX-Redirect"] = "/"
+        return response
+    else:  # feed
+        return HTMLResponse(
+            f"""
+            {flash_html}
+            <div id="modal-container" hx-swap-oob="true"></div>
+            <div id="post-{post_id}" hx-swap-oob="true"></div>
+            """
+        )
 
 @router.get("/feed", response_class=HTMLResponse)
 async def post_feed(
@@ -149,30 +346,4 @@ async def like_post(
             "liked": liked,
             "like_count": like_count,
         },
-    )
-
-@router.get("/{post_id}/comment-form")
-async def comment_form(
-    request: Request,
-    post_id: str,
-    user: UserInDB | None = Depends(require_user_cookie),
-):
-
-    return templates.TemplateResponse(
-        "comments/comment_form_modal.html",
-        {"request": request, "post_id": post_id},
-    )
-
-
-
-@router.get("/{post_id}/comments", response_class=HTMLResponse)
-async def get_comments(request: Request, post_id: str):
-    comments = await comment_crud.get_comments_of_post(post_id)
-
-    return templates.TemplateResponse(
-        "posts/comments.html",
-        {
-            "request": request,
-            "comments": comments
-        }
     )

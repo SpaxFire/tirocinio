@@ -1,7 +1,7 @@
-from typing import Annotated, Union
+from typing import Annotated
 from fastapi import Request, Header, APIRouter
 from fastapi.responses import HTMLResponse
-from app.core.render import render
+from app.core.config import templates
 
 router = APIRouter(tags=["pages"])
 
@@ -11,19 +11,26 @@ async def index(
     request: Request,
     hx_request: Annotated[str | None, Header()] = None
 ):
-    # richiesta HTMX → solo contenuto centrale
+    """
+    Home page:
+    - se richiesta HTMX → solo contenuto centrale
+    - se richiesta normale → pagina completa
+    """
     if hx_request:
-        return await render(
-            request,
-            "partials/home_content.html"
+        return templates.TemplateResponse(
+            "partials/home_content.html",
+            {"request": request}
         )
 
-    # richiesta normale → pagina completa
-    return await render(
-        request,
-        "home.html"
+    return templates.TemplateResponse(
+        "home.html",
+        {"request": request}
     )
 
-@router.get("/empty")
+
+@router.get("/empty", response_class=HTMLResponse)
 async def empty():
+    """
+    Endpoint vuoto usato per svuotare i messaggi di errore nei modali tramite HTMX
+    """
     return HTMLResponse("")

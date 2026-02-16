@@ -1,0 +1,13 @@
+{% set content %}
+<h2 class="text-lg font-semibold mb-4">Conferma eliminazione</h2>
+<p class="mb-4">Sei sicuro di voler eliminare questo post? Questa azione non è reversibile.</p>
+
+<div class="flex justify-end gap-2">
+    <form hx-post="/posts/{{ post.id }}/delete" hx-target="#modal-container" hx-swap="innerHTML">
+        <input type="hidden" name="source" value="{{ source }}">
+        <button type="submit" class="btn-danger px-4 py-2">Elimina</button>
+    </form>
+</div>
+{% endset %}
+
+{% include "components/modal.html" %}

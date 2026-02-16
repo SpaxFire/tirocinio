@@ -1,0 +1,84 @@
+{% set content %}
+<h2 class="text-lg font-semibold mb-4">Modifica Post</h2>
+<form hx-post="/posts/{{ post.id }}/update" hx-target="this" hx-swap="none" enctype="multipart/form-data"
+    class="flex flex-col gap-3">
+
+    <!-- per sapere cosa deve essere aggiornato dopo l'edit -->
+    <input type="hidden" name="source" value="{{ source }}">
+
+    <!-- contenuto -->
+    <textarea name="content" class="w-full border rounded-lg p-3 resize-none" rows="4">{{ post.content }}</textarea>
+
+    <!-- upload nuove immagini -->
+    <div class="flex flex-col gap-1">
+        <p class="text-sm text-gray-500">Immagini nuove</p>
+        <input type="file" name="media" multiple class="text-sm rounded-xl btn-icon btn-ghost">
+    </div>
+
+    <!-- immagini già caricate -->
+    <input type="hidden" name="existing_media" id="existing-media-hidden" value="{{ post.media_urls | join(',') }}">
+
+    {% if post.media_urls %}
+    <div class="mt-3">
+        <p class="text-sm text-gray-500 mb-2">Immagini attuali</p>
+
+        <div id="existing-media-preview" class="flex gap-3 flex-wrap">
+            {% for media in post.media_urls %}
+            <div class="relative group" data-url="{{ media }}">
+                <img src="{{ media }}" class="w-24 h-24 object-cover rounded-lg border">
+
+                <!-- overlay remove -->
+                <button type="button" onclick="removeExistingMedia('{{ media }}')"
+                    class="absolute top-1 right-1 cursor-pointer bg-black/70 text-white text-xs rounded-xl px-2 py-0.5 opacity-0 group-hover:opacity-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="size-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- categorie -->
+    <div class="relative">
+        <input id="category-input" name="category_search" hx-get="/categories/search"
+            hx-trigger="click, input changed delay:400ms" hx-target="#category-results" hx-swap="innerHTML"
+            onblur="closeCategoryDropdown()" class="border rounded p-2 w-full" placeholder="Cerca categorie..."
+            value="">
+        <div id="category-results" data-dropdown data-trigger="category-input"
+            class="absolute bg-white rounded w-full mt-1 shadow"></div>
+    </div>
+
+    <div id="selected-categories" class="flex gap-2 flex-wrap mt-2">
+        {% for cat in post.categories %}
+        <span class="bg-gray-200 rounded px-2 py-1">{{ cat }}</span>
+        {% endfor %}
+    </div>
+    <input type="hidden" name="categories" id="categories-hidden" value="{{ post.categories | join(',') }}">
+
+    <div class="flex justify-end mt-4">
+        <button type="submit" class="btn-primary px-4 py-2">Salva</button>
+    </div>
+</form>
+{% endset %}
+
+<script>
+    // funzione per rimuovere un'immagine già esistente (aggiorna l'input hidden e la preview)
+    function removeExistingMedia(url) {
+        const hidden = document.getElementById("existing-media-hidden");
+
+        let values = hidden.value
+            .split(",")
+            .filter(v => v && v !== url);
+
+        hidden.value = values.join(",");
+
+        const el = document.querySelector(`[data-url="${url}"]`);
+        if (el) el.remove();
+    }
+</script>
+
+{% include "components/modal.html" %}
