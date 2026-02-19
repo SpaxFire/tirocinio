@@ -1,11 +1,13 @@
 {% for comment in comments %}
-<div id="comment-{{ comment.id }}" class="flex gap-3 py-3 border-b m-2 relative group">
+<div id="comment-{{ comment.id }}" class="group/comment flex gap-3 py-3 border-b m-2 relative">
 
-    <!-- FOTO PROFILO -->
-    <div class="flex-shrink-0">
+    <!-- FOTO PROFILO + LINK -->
+    <a hx-get="/u/{{ comment.author }}" hx-target="#main-content" hx-push-url="true" hx-trigger="click consume"
+        class="flex-shrink-0 relative z-30 no-underline cursor-pointer">
+
         <img src="{{ comment.profile_image or url_for('static', path='images/default_avatar.png') }}"
-            class="w-10 h-10 rounded-full object-cover">
-    </div>
+            class="relative z-30 w-10 h-10 rounded-full object-cover img-hover">
+    </a>
 
     <!-- CONTENUTO -->
     <div class="flex-1">
@@ -15,9 +17,14 @@
 
             <div>
                 <div class="flex items-center gap-2 text-sm">
-                    <span class="font-semibold text-gray-800">
+
+                    <!-- NOME CLICCABILE -->
+                    <a hx-get="/u/{{ comment.author }}" hx-target="#main-content" hx-push-url="true"
+                        hx-trigger="click consume" class="font-semibold text-gray-800  relative z-30 cursor-pointer">
+
                         {{ comment.author }}
-                    </span>
+                    </a>
+
                     <span class="text-gray-400 text-xs">
                         {{ comment.created_at }}
                     </span>
@@ -26,11 +33,11 @@
 
             {% set user = current_user(request) %}
             {% if user and user.username == comment.author %}
-            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+            <div class="flex gap-2 opacity-0 group-hover/comment:opacity-100 transition">
 
                 <!-- EDIT -->
                 <button hx-get="/comments/{{ comment.id }}/edit-modal" hx-target="#modal-container" hx-swap="innerHTML"
-                    hx-trigger="click consume" class="relative z-30 btn-icon transition">
+                    hx-trigger="click consume" hx-push-url="false" class="relative z-30 btn-icon transition">
 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                         stroke="currentColor" class="w-4 h-4">
@@ -41,7 +48,8 @@
 
                 <!-- DELETE -->
                 <button hx-get="/comments/{{ comment.id }}/delete-modal" hx-target="#modal-container"
-                    hx-swap="innerHTML" hx-trigger="click consume" class="relative z-30 btn-icon-danger transition">
+                    hx-swap="innerHTML" hx-trigger="click consume" hx-push-url="false"
+                    class="relative z-30 btn-icon-danger transition">
 
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                         stroke="currentColor" class="w-4 h-4">
@@ -63,3 +71,12 @@
     </div>
 </div>
 {% endfor %}
+
+{% if show_all_button %}
+<div class="mt-3 items-center justify-center text-center relative z-30">
+    <button hx-get="/posts/{{ post_id }}/comments?source=detail" hx-swap="innerHTML" hx-trigger="click consume"
+        class="text-sm font-medium px-4 py-2 btn-primary transition">
+        Mostra gli altri {{ remain_count }} commenti
+    </button>
+</div>
+{% endif %}

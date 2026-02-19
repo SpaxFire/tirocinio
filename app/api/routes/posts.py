@@ -8,7 +8,6 @@ from app.services.media import save_post_media
 from app.api.routes.auth import require_user_cookie, optional_current_user_cookie
 from app.schemas.post import Post, PostCreate, PostUpdate
 from app.db import post as post_crud
-from app.db import comment as comment_crud
 from app.core.config import templates
 from app.schemas.user import UserInDB
 

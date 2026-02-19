@@ -90,7 +90,15 @@ def update_post(post_id: str, content: str, categories: list[str], media_urls: l
 def delete_post(post_id: str):
     driver = get_driver()
     driver.execute_query(
-        "MATCH (p:Post {id: $id}) DELETE p",
+        """
+        MATCH (p:Post {id: $id})
+
+        OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
+
+        OPTIONAL MATCH (p)<-[l:LIKES]-()
+
+        DETACH DELETE p, c
+        """,
         id=post_id,
         database_="neo4j",
     )
@@ -160,6 +168,7 @@ async def get_posts_paginated(skip: int, limit: int, user_id: str | None):
             p.created_at AS created_at,
             p.media_urls AS media_urls,
             u.username  AS author,
+            u.profile_image AS profile_image,
             like_count,
             comment_count,
             CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me,

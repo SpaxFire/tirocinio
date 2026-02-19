@@ -1,5 +1,5 @@
 <button id="like-btn-{{ post_id }}" hx-post="/posts/{{ post_id }}/likes" hx-target="#like-btn-{{ post_id }}"
-    hx-swap="outerHTML" hx-trigger="click consume"
+    hx-push-url="false" hx-swap="outerHTML" hx-trigger="click consume"
     class="flex items-center gap-1 px-2 py-1 relative z-20 btn-icon hover:bg-gray-100">
 
     {% if liked %}

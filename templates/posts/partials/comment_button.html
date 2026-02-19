@@ -1,5 +1,5 @@
 <button id="comment-btn-{{ post_id }}" hx-get="/posts/{{ post_id }}/comment-modal?source={{ source }}"
-    hx-target="#modal-container" hx-swap="innerHTML" hx-trigger="click consume"
+    hx-push-url="false" hx-target="#modal-container" hx-swap="innerHTML" hx-trigger="click consume"
     class="flex items-center gap-1 px-2 py-1 relative z-20 btn-icon hover:bg-gray-100">
 
     {% if commented_by_me %}

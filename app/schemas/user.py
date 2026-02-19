@@ -6,12 +6,21 @@ class UserBase(BaseModel):
     username: str
     email: str | None = None
 
-class UserPublic(UserBase):
-    created_at: datetime
-    role: str
+class UserPublic(BaseModel):
+    id: str
+    username: str
+    email: str | None = None
+    role: str = "USER"
     bio: str | None = None
     profile_image: str | None = None
-    is_active: bool
+    created_at: datetime | None = None
+    is_active: bool = True
+
+    post_count: int = 0
+    follower_count: int = 0
+    following_count: int = 0
+    total_likes_received: int = 0
+    following_by_me: bool = False
 
 class UserInDB(UserBase):
     password_hash: str

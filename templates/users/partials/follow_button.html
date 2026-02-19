@@ -1,0 +1,23 @@
+<div id="follow-btn-{{ username }}">
+
+    <button hx-post="/u/{{ username }}/follow" hx-target="#follow-btn-{{ username }}" hx-swap="innerHTML"
+        hx-trigger="click consume" class="px-5 py-2 rounded-full transition
+        {% if following %}
+            btn-danger-transition
+        {% else %}
+            btn-primary
+        {% endif %}
+        ">
+
+        {% if following %}
+        Segui già
+        {% else %}
+        Segui
+        {% endif %}
+    </button>
+
+    <div class="text-sm text-gray-400 mt-2 text-center">
+        {{ follower_count }} follower
+    </div>
+
+</div>

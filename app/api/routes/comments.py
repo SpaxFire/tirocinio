@@ -11,16 +11,35 @@ from app.schemas.user import UserInDB
 router = APIRouter(tags=["comments"])
 
 @router.get("/posts/{post_id}/comments", response_class=HTMLResponse)
-async def get_comments(request: Request, post_id: str):
-    comments = await comment_crud.get_comments_of_post(post_id)
+async def get_comments(
+    request: Request,
+    post_id: str,
+    source: str = "feed"
+):
+    limit = 5 if source == "feed" else 0
+
+    comments = await comment_crud.get_comments_of_post(
+        post_id,
+        limit=limit
+    )
+
+    total_count = await comment_crud.count_comments_of_post(post_id)
+
+    show_all_button = source == "feed" and total_count > 5
 
     return templates.TemplateResponse(
         "posts/comments.html",
         {
             "request": request,
-            "comments": comments
+            "comments": comments,
+            "post_id": post_id,
+            "source": source,
+            "show_all_button": show_all_button,
+            "remain_count": total_count - limit,
         }
     )
+
+
 
 @router.get("/posts/{post_id}/comment-modal", response_class=HTMLResponse)
 async def comment_modal(
@@ -78,6 +97,18 @@ async def create_comment(
         "comments": comments
     })
 
+    commented_by_me = await comment_crud.has_user_commented(post_id=post_id, username=user.username)
+    button_html = templates.get_template(
+        "posts/partials/comment_button.html"
+    ).render({
+        "request": request,
+        "post_id": post_id,
+        "commented_by_me": commented_by_me,
+        "comment_count": len(comments),
+        "source": source
+    })
+
+
     # render corretto in base alla provenienza
     if source == "detail":
         return HTMLResponse(
@@ -96,8 +127,8 @@ async def create_comment(
                 {comments_html}
             </div>
 
-            <div id="comment-count-{post_id}" hx-swap-oob="true">
-                {len(comments)}
+            <div id="comment-btn-{ post_id }" hx-swap-oob="outerHTML">
+                { button_html }
             </div>
             """
         )
@@ -119,8 +150,8 @@ async def create_comment(
                 {comments_html}
             </div>
 
-            <div id="comment-count-{post_id}" hx-swap-oob="true">
-                {len(comments)}
+            <div id="comment-btn-{ post_id }" hx-swap-oob="outerHTML">
+                { button_html }
             </div>
             """
         )
@@ -236,7 +267,22 @@ async def delete_comment(
     if not user or user.username != comment.author:
         raise HTTPException(status_code=403)
 
+    post_id = comment.post_id
+
     comment_crud.delete_comment(comment_id)
+
+    comments = await comment_crud.get_comments_of_post(post_id)
+
+    commented_by_me = await comment_crud.has_user_commented(post_id=post_id, username=user.username)
+    button_html = templates.get_template(
+        "posts/partials/comment_button.html"
+    ).render({
+        "request": request,
+        "post_id": post_id,
+        "commented_by_me": commented_by_me,
+        "comment_count": len(comments),
+        "source": source
+    })
 
     return HTMLResponse(f"""
         <div id="flash-container" hx-swap-oob="innerHTML">
@@ -249,5 +295,11 @@ async def delete_comment(
         </div>
 
         <div id="modal-container" hx-swap-oob="true"></div>
+
         <div id="comment-{comment_id}" hx-swap-oob="delete"></div>
+
+        <div id="comment-btn-{ post_id }" hx-swap-oob="outerHTML">
+            { button_html }
+        </div>
     """)
+

@@ -1,0 +1,65 @@
+<div class="space-y-4">
+
+    {% for user_item in users %}
+
+    <div id="user-{{ user_item.username }}" hx-get="/u/{{ user_item.username }}" hx-target="#main-content"
+        hx-push-url="true" hx-trigger="click consume"
+        class="bg-white rounded-xl shadow p-4 flex items-center justify-between hover:bg-gray-50 transition">
+
+        <!-- LEFT: avatar + info -->
+        <div class="flex items-center gap-4 px-2 py-2 -mx-2 -my-2 rounded-lg no-underline transition">
+
+            <!-- Avatar -->
+            <img src="{{ user_item.profile_image or url_for('static', path='images/default_avatar.png') }}"
+                class="w-14 h-14 rounded-full object-cover ring-2 ring-transparent transition-all duration-200 hover:ring-blue-600">
+
+            <!-- Info -->
+            <div>
+                <h3 class="font-semibold text-gray-800">
+                    {{ user_item.username }}
+                </h3>
+
+                {% if user_item.bio %}
+                <p class="text-sm text-gray-500 line-clamp-2">
+                    {{ user_item.bio }}
+                </p>
+                {% else %}
+                <p class="text-sm text-gray-400 italic">
+                    Nessuna bio
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- RIGHT: follow button -->
+        {% set current = current_user(request) %}
+        {% if current and current.username != user_item.username %}
+        <div id="follow-btn-{{ user_item.username }}">
+            {% with
+            username=user_item.username,
+            following=user_item.following_by_me,
+            follower_count=user_item.follower_count
+            %}
+            {% include "users/partials/follow_button.html" %}
+            {% endwith %}
+        </div>
+        {% endif %}
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% if has_more %}
+<div hx-get="/u/{{ request.path_params.username }}/{{ list_type }}?page={{ next_page }}" hx-trigger="revealed"
+    hx-target="this" hx-swap="outerHTML" class="min-h-16 flex items-center justify-center gap-2 text-gray-500">
+
+    <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+    </svg>
+
+    <span class="text-sm">Caricamento...</span>
+</div>
+{% endif %}

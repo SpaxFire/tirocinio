@@ -1,7 +1,7 @@
 import uuid
 from neo4j.time import DateTime as Neo4jDateTime
 
-from app.db.neo4j import get_driver
+from app.db.neo4j import driver
 from app.schemas.user import UserInDB, UserPublic
 
 def get_user_by_username(username: str) -> UserInDB | None:
@@ -11,7 +11,7 @@ def get_user_by_username(username: str) -> UserInDB | None:
     RETURN u
     """
 
-    with get_driver().session() as session:
+    with driver.session() as session:
 
         record = session.run(query, username=username).single()
 
@@ -29,14 +29,39 @@ def get_user_by_username(username: str) -> UserInDB | None:
             is_active=u.get("is_active", True),
         )
     
-def get_user_profile_by_username(username: str) -> UserPublic | None:
+def get_user_profile_by_username(username: str, my_id: str | None) -> UserPublic | None:
     query = """
     MATCH (u:User {username: $username})
-    RETURN u
+
+    OPTIONAL MATCH (u)-[:CREATED]->(p:Post)
+    WITH u, count(DISTINCT p) AS post_count
+
+    OPTIONAL MATCH (u)-[:CREATED]->(p2:Post)<-[:LIKES]-(liker:User)
+    WITH u, post_count, count(liker) AS total_likes_received
+
+    OPTIONAL MATCH (u)<-[:FOLLOWS]-(follower:User)
+    WITH u, post_count, total_likes_received,
+         count(DISTINCT follower) AS follower_count
+
+    OPTIONAL MATCH (u)-[:FOLLOWS]->(following:User)
+    WITH u, post_count, total_likes_received,
+         follower_count,
+         count(DISTINCT following) AS following_count
+
+    OPTIONAL MATCH (me:User {id: $my_id})
+    OPTIONAL MATCH (me)-[rel:FOLLOWS]->(u)
+
+    RETURN
+        u,
+        post_count,
+        total_likes_received,
+        follower_count,
+        following_count,
+        CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me
     """
 
-    with get_driver().session() as session:
-        record = session.run(query, username=username).single()
+    with driver.session() as session:
+        record = session.run(query, username=username, my_id=my_id).single()
 
         if not record:
             return None
@@ -44,7 +69,6 @@ def get_user_profile_by_username(username: str) -> UserPublic | None:
         u = record["u"]
 
         created_at = u.get("created_at")
-        
         if isinstance(created_at, Neo4jDateTime):
             created_at = created_at.to_native()
 
@@ -57,12 +81,308 @@ def get_user_profile_by_username(username: str) -> UserPublic | None:
             profile_image=u.get("profile_image"),
             created_at=created_at,
             is_active=u.get("is_active", True),
-        )
 
+            post_count=record["post_count"],
+            follower_count=record["follower_count"],
+            following_count=record["following_count"],
+            total_likes_received=record["total_likes_received"],
+            following_by_me=record["following_by_me"]
+        )
     
+def toggle_follow(my_id: str, username: str):
+    query = """
+    MATCH (me:User {id: $my_id})
+    MATCH (target:User {username: $username})
+
+    OPTIONAL MATCH (me)-[r:FOLLOWS]->(target)
+
+    WITH me, target, r,
+        CASE WHEN r IS NULL THEN true ELSE false END AS should_follow
+
+    FOREACH (_ IN CASE WHEN should_follow THEN [1] ELSE [] END |
+        MERGE (me)-[:FOLLOWS {created_at: datetime()}]->(target)
+    )
+
+    FOREACH (_ IN CASE WHEN should_follow THEN [] ELSE [1] END |
+        DELETE r
+    )
+
+    WITH target, should_follow AS following
+    OPTIONAL MATCH (target)<-[:FOLLOWS]-(f:User)
+
+    RETURN following, count(f) AS follower_count
+    """
+
+    records, _, _ = driver.execute_query(
+        query,
+        my_id=my_id,
+        username=username,
+        database_="neo4j"
+    )
+
+    rec = records[0]
+    return rec["following"], rec["follower_count"]
+
+async def get_user_posts_paginated(username: str, skip: int, limit: int, my_id: str | None):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (u:User {username: $username})-[:CREATED]->(p:Post)
+
+        OPTIONAL MATCH (p)<-[:LIKES]-(liker:User)
+        WITH u, p, count(DISTINCT liker) AS like_count
+
+        OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
+        WITH u, p, like_count, count(DISTINCT c) AS comment_count
+
+        OPTIONAL MATCH (me:User {id: $my_id})
+        OPTIONAL MATCH (me)-[ml:LIKES]->(p)
+        OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+
+        WITH u, p, like_count, comment_count, ml, count(DISTINCT myComment) AS my_comments
+
+        ORDER BY p.created_at DESC
+        SKIP $skip
+        LIMIT $limit
+
+        RETURN
+            p.id        AS id,
+            p.content   AS content,
+            p.created_at AS created_at,
+            p.media_urls AS media_urls,
+            u.username  AS author,
+            u.profile_image AS profile_image,
+            like_count,
+            comment_count,
+            CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me,
+            CASE WHEN my_comments > 0 THEN true ELSE false END AS commented_by_me
+        """,
+        skip=skip,
+        limit=limit,
+        username=username,
+        my_id=my_id,
+        database_="neo4j",
+    )
+
+    formatted = []
+
+    for record in records:
+        post = dict(record)
+        created_at = post["created_at"]
+
+        if isinstance(created_at, Neo4jDateTime):
+            created_at = created_at.to_native()
+
+        post["created_at"] = created_at.strftime("%d %b %Y • %H:%M")
+
+        formatted.append(post)
+
+    return formatted
+
+async def get_user_comments_paginated(username: str, skip: int, limit: int, my_id: str | None):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (u:User {username: $username})-[:CREATED]->(c:Comment)
+        MATCH (c)-[:ON_POST]->(p:Post)
+        MATCH (postAuthor:User)-[:CREATED]->(p)
+
+        WITH u, c, p, postAuthor
+        ORDER BY c.created_at DESC
+        SKIP $skip
+        LIMIT $limit
+
+        RETURN
+            c.id AS comment_id,
+            c.content AS comment_content,
+            c.created_at AS comment_created_at,
+
+            p.id AS post_id,
+            p.content AS post_content,
+            p.created_at AS post_created_at,
+
+            postAuthor.username AS post_author,
+            postAuthor.profile_image AS post_author_image
+        """,
+        username=username,
+        skip=skip,
+        limit=limit,
+        database_="neo4j",
+    )
+
+    formatted = []
+
+    for record in records:
+        comment = dict(record)
+
+        # Format dates
+        for field in ["comment_created_at", "post_created_at"]:
+            dt = comment[field]
+            if isinstance(dt, Neo4jDateTime):
+                dt = dt.to_native()
+            comment[field] = dt.strftime("%d %b %Y • %H:%M")
+
+        formatted.append(comment)
+
+    return formatted
+
+async def get_user_likes_paginated(username: str, skip: int, limit: int, my_id: str | None):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (u:User {username: $username})-[:LIKES]->(p:Post)
+
+        OPTIONAL MATCH (p)<-[:CREATED]-(author:User)
+
+        OPTIONAL MATCH (p)<-[:LIKES]-(liker:User)
+        WITH u, p, author, count(DISTINCT liker) AS like_count
+
+        OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
+        WITH u, p, author, like_count, count(DISTINCT c) AS comment_count
+
+        OPTIONAL MATCH (me:User {id: $my_id})
+        OPTIONAL MATCH (me)-[ml:LIKES]->(p)
+        OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+
+        WITH u, p, author, like_count, comment_count, ml,
+             count(DISTINCT myComment) AS my_comments
+
+        ORDER BY p.created_at DESC
+        SKIP $skip
+        LIMIT $limit
+
+        RETURN
+            p.id AS id,
+            p.content AS content,
+            p.created_at AS created_at,
+            p.media_urls AS media_urls,
+            author.username AS author,
+            author.profile_image AS profile_image,
+            like_count,
+            comment_count,
+            CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me,
+            CASE WHEN my_comments > 0 THEN true ELSE false END AS commented_by_me
+        """,
+        skip=skip,
+        limit=limit,
+        username=username,
+        my_id=my_id,
+        database_="neo4j",
+    )
+
+    formatted = []
+
+    for record in records:
+        post = dict(record)
+        created_at = post["created_at"]
+
+        if isinstance(created_at, Neo4jDateTime):
+            created_at = created_at.to_native()
+
+        post["created_at"] = created_at.strftime("%d %b %Y • %H:%M")
+
+        formatted.append(post)
+
+    return formatted
+
+def get_user_with_counts(username: str, my_id: str | None):
+
+    query = """
+    MATCH (u:User {username: $username})
+
+    OPTIONAL MATCH (u)<-[:FOLLOWS]-(f:User)
+    WITH u, count(DISTINCT f) AS follower_count
+
+    OPTIONAL MATCH (u)-[:FOLLOWS]->(f2:User)
+    WITH u, follower_count, count(DISTINCT f2) AS following_count
+
+    OPTIONAL MATCH (me:User {id: $my_id})
+    OPTIONAL MATCH (me)-[rel:FOLLOWS]->(u)
+
+    RETURN
+        u,
+        follower_count,
+        following_count,
+        CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me
+    """
+
+    records, _, _ = driver.execute_query(
+        query,
+        username=username,
+        my_id=my_id,
+        database_="neo4j"
+    )
+
+    if not records:
+        return None
+
+    record = records[0]
+    u = record["u"]
+
+    return {
+        **dict(u),
+        "follower_count": record["follower_count"],
+        "following_count": record["following_count"],
+        "following_by_me": record["following_by_me"],
+    }
+
+def get_followers_paginated(username: str, skip: int, limit: int, my_id: str | None):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (u:User {username: $username})
+        MATCH (f:User)-[:FOLLOWS]->(u)
+
+        OPTIONAL MATCH (me:User {id: $my_id})
+        OPTIONAL MATCH (me)-[rel:FOLLOWS]->(f)
+
+        RETURN
+            f.id AS id,
+            f.username AS username,
+            f.bio AS bio,
+            f.profile_image AS profile_image,
+            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me
+        ORDER BY f.username
+        SKIP $skip
+        LIMIT $limit
+        """,
+        username=username,
+        skip=skip,
+        limit=limit,
+        my_id=my_id,
+        database_="neo4j"
+    )
+
+    return [dict(record) for record in records]
+
+def get_following_paginated( username: str, skip: int, limit: int, my_id: str | None):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (u:User {username: $username})
+        MATCH (u)-[:FOLLOWS]->(f:User)
+
+        OPTIONAL MATCH (me:User {id: $my_id})
+        OPTIONAL MATCH (me)-[rel:FOLLOWS]->(f)
+
+        RETURN
+            f.id AS id,
+            f.username AS username,
+            f.bio AS bio,
+            f.profile_image AS profile_image,
+            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me
+        ORDER BY f.username
+        SKIP $skip
+        LIMIT $limit
+        """,
+        username=username,
+        skip=skip,
+        limit=limit,
+        my_id=my_id,
+        database_="neo4j"
+    )
+
+    return [dict(record) for record in records]
+
+
 def create_user(username: str, email: str, password_hash: str):
 
-    with get_driver().session() as session:
+    with driver.session() as session:
 
         # check username/email
         check = session.run("""

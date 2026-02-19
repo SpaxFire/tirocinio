@@ -1,0 +1,53 @@
+<!-- struttura alternativa rispetto a quella di feed e post_card -->
+<div class="space-y-6">
+
+    {% for item in comments %}
+
+    <div id="comment-{{ item.comment_id }}" hx-get="/posts/{{ item.post_id }}" hx-target="#main-content"
+        hx-push-url="true"
+        class="group relative bg-white rounded-xl shadow p-4 cursor-pointer hover:bg-gray-50 transition">
+
+        <!-- Post context -->
+        <div class="bg-gray-100 rounded-lg p-3 mb-3">
+
+            <a hx-get="/posts/{{ item.post_id }}" hx-target="#main-content" hx-push-url="true"
+                hx-trigger="click consume" class="relative z-30 font-semibold hover:text-blue-600">
+                {{ item.post_author }}
+            </a>
+
+            <p class="text-sm text-gray-500 mt-1 line-clamp-2">
+                {{ item.post_content }}
+            </p>
+
+            <span class="text-xs text-gray-400">
+                {{ item.post_created_at }}
+            </span>
+        </div>
+
+        <!-- User comment -->
+        <div class="border-l-4 border-blue-600 pl-4">
+            <p class="text-gray-800">
+                {{ item.comment_content }}
+            </p>
+            <span class="text-xs text-gray-400">
+                {{ item.comment_created_at }}
+            </span>
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% if has_more %}
+<div hx-get="/u/{{ request.path_params.username }}/comments?page={{ next_page }}" hx-trigger="revealed" hx-target="this"
+    hx-swap="outerHTML" class="min-h-16 flex items-center justify-center gap-2 text-gray-500" aria-label="Caricamento">
+    <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
+        <circle class="opacity-25" cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="4">
+        </circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
+    </svg>
+    <span class="text-sm">Caricamento...</span>
+</div>
+{% endif %}

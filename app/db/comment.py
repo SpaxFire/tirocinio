@@ -5,7 +5,11 @@ from neo4j.time import DateTime as Neo4jDateTime
 from app.schemas.comment import CommentPublic
 
 
-async def get_comments_of_post(post_id: str) -> list[CommentPublic]:
+async def get_comments_of_post(
+    post_id: str,
+    limit: int | None = None
+) -> list[CommentPublic]:
+
     query = """
     MATCH (p:Post {id: $post_id})
     MATCH (u:User)-[:CREATED]->(c:Comment)-[:ON_POST]->(p)
@@ -18,8 +22,15 @@ async def get_comments_of_post(post_id: str) -> list[CommentPublic]:
     ORDER BY c.created_at DESC
     """
 
+    if limit:
+        query += "\nLIMIT $limit"
+
+    params = {"post_id": post_id}
+    if limit:
+        params["limit"] = limit
+
     with driver.session() as session:
-        result = session.run(query, post_id=post_id)
+        result = session.run(query, **params)
 
         comments = []
         for record in result:
@@ -39,6 +50,31 @@ async def get_comments_of_post(post_id: str) -> list[CommentPublic]:
             )
 
         return comments
+
+async def count_comments_of_post(post_id: str) -> int:
+    query = """
+    MATCH (p:Post {id: $post_id})<-[:ON_POST]-(c:Comment)
+    RETURN count(c) AS total
+    """
+
+    with driver.session() as session:
+        result = session.run(query, post_id=post_id)
+        record = result.single()
+        return record["total"] if record else 0
+
+async def has_user_commented(post_id: str, username: str) -> bool:
+    query = """
+    MATCH (u:User {username: $username})
+    MATCH (p:Post {id: $post_id})
+    RETURN EXISTS {
+        MATCH (u)-[:CREATED]->(:Comment)-[:ON_POST]->(p)
+    } AS commented_by_me
+    """
+
+    with driver.session() as session:
+        result = session.run(query, username=username, post_id=post_id)
+        record = result.single()
+        return record["commented_by_me"] if record else False
 
 
 def create_comment(post_id: str, username: str, content: str):
@@ -95,6 +131,7 @@ def get_comment_by_id(comment_id: str) -> CommentPublic | None:
             profile_image=record["profile_image"],
             text=record["text"],
             created_at=created_at.strftime("%d %b %Y • %H:%M"),
+            post_id=record["post_id"],
         )
 
 

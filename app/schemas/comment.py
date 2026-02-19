@@ -7,3 +7,4 @@ class CommentPublic(BaseModel):
     profile_image: str | None
     text: str
     created_at: str
+    post_id : str | None = None

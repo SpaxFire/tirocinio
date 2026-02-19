@@ -20,7 +20,7 @@
     }
 
     a {
-        @apply text-blue-600 hover:underline;
+        @apply text-black hover:text-blue-600 transition;
     }
 }
 
@@ -70,6 +70,10 @@
         @apply cursor-pointer bg-red-600 text-white hover:bg-red-700 rounded-lg;
     }
 
+    .btn-danger-transition {
+        @apply cursor-pointer bg-gray-200 text-black hover:bg-red-600 hover:text-white transition rounded-lg;
+    }
+
     .msg-success {
         @apply text-green-600 bg-green-50 p-3 mb-3 rounded-lg;
     }
@@ -78,4 +82,18 @@
         @apply text-red-600 bg-red-50 p-3 mb-3 rounded-lg;
     }
 
+    .img-hover {
+        @apply ring-2 ring-transparent transition-all duration-200 hover:ring-blue-600;
+    }
+
+}
+
+@layer utilities {
+    .nav-item {
+        @apply border-b-2 border-transparent hover:border-blue-600 hover:text-blue-600 transition;
+    }
+
+    .nav-item.active {
+        @apply border-blue-600 text-blue-600;
+    }
 }

@@ -1,0 +1,82 @@
+<div class="overflow-hidden max-w-2xl mx-auto bg-white rounded-xl shadow p-6">
+
+    <!-- Profile section -->
+    <div class="px-6 pb-4">
+        <div class="flex justify-between items-start">
+
+            <!-- Left: avatar + info -->
+            <div class="flex flex-col">
+                <!-- Avatar -->
+                <img src="{{ user.profile_image or url_for('static', path='images/default_avatar.png') }}" alt="Profile"
+                    class="w-28 h-28 rounded-full border-black  object-cover" />
+
+                <!-- Username -->
+                <h1 class="mt-3">
+                    {{ user.username }}
+                </h1>
+
+                <!-- Bio -->
+                <p class="mt-1">
+                    {{ user.bio }}
+                </p>
+            </div>
+
+            <!-- Follow button -->
+            {% if current_user(request).username != user.username %}
+            <div id="follow-btn-{{ user.username }}" class="mt-4">
+                {% with
+                username=user.username,
+                following=user.following_by_me,
+                follower_count=user.follower_count
+                %}
+                {% include "users/partials/follow_button.html" %}
+                {% endwith %}
+            </div>
+            {% endif %}
+
+
+        </div>
+
+        <!-- Tabs -->
+        <div class="mt-6 border-b border-gray-700">
+            <nav id="profile-tabs" class="flex space-x-8 text-gray-400 font-medium justify-between" hx-on:click="
+        if(event.target.classList.contains('nav-item')){
+            document.querySelectorAll('#profile-tabs .nav-item')
+                .forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+     ">
+
+                <button hx-get="/u/{{ user.username }}/posts" hx-target="#profile-content"
+                    class="py-3 nav-item active cursor-pointer">
+                    Post
+                </button>
+
+                <button hx-get="/u/{{ user.username }}/comments" hx-target="#profile-content"
+                    class="py-3 nav-item cursor-pointer">
+                    Commenti
+                </button>
+
+                <button hx-get="/u/{{ user.username }}/likes" hx-target="#profile-content"
+                    class="py-3 nav-item cursor-pointer">
+                    Mi piace
+                </button>
+
+                <button hx-get="/u/{{ user.username }}/followers" hx-target="#profile-content"
+                    class="py-3 nav-item cursor-pointer">
+                    Follower
+                </button>
+
+                <button hx-get="/u/{{ user.username }}/following" hx-target="#profile-content"
+                    class="py-3 nav-item cursor-pointer">
+                    Seguiti
+                </button>
+            </nav>
+
+
+        </div>
+
+        <!-- Content -->
+        <div id="profile-content" class="py-6" hx-get="/u/{{ user.username }}/posts" hx-trigger="load"></div>
+    </div>
+</div>
