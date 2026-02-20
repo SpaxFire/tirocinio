@@ -80,13 +80,17 @@ async def search_page(
 
     # pagination URL mantiene filtri
     params = {
-        "q": q,
+        "q": q.strip(),
         "tab": tab,
-        "categories": categories,
-        "bio": bio,
+        "categories": categories.strip(),
+        "bio": bio.strip(),
     }
 
-    pagination_url = f"/search?{urlencode(params)}"
+    # rimuove chiavi con valori vuoti
+    clean_params = {k: v for k, v in params.items() if v}
+
+    pagination_url = f"/search?{urlencode(clean_params)}"
+    print("URL di paginazione:", pagination_url)
 
     context = {
         "request": request,
@@ -112,13 +116,24 @@ async def search_page(
                 "users": "partials/user_list.html",
                 "comments": "users/partials/profile_comments.html",
             }
-            return templates.TemplateResponse(template_map[tab], context)
 
-        return templates.TemplateResponse(
+            response = templates.TemplateResponse(template_map[tab], context)
+            # no push durante paginazione
+            return response
+
+        # Primo caricamento o cambio tab
+        response = templates.TemplateResponse(
             "search/partials/search_content.html",
             context
         )
 
+        # push dell'URL pulito
+        response.headers["HX-Push-Url"] = pagination_url
+
+        return response
+
+
+    # NON HX → render normale (già pulito se hai fatto redirect prima)
     return templates.TemplateResponse("search/search.html", context)
 
 @router.get("/empty", response_class=HTMLResponse)

@@ -168,6 +168,7 @@ def search_comments(query: str, categories: list[str], skip: int, limit: int):
 
         WITH 
             c, p, author,
+            collect(DISTINCT cat.name) AS categories,
             [x IN collect(cat.name) | trim(toLower(x))] AS postCategories,
             [y IN $categories | trim(toLower(y))] AS filterCategories
 
@@ -179,7 +180,7 @@ def search_comments(query: str, categories: list[str], skip: int, limit: int):
 
         MATCH (post_author:User)-[:CREATED]->(p)
 
-        WITH DISTINCT c, p, author, post_author
+        WITH DISTINCT c, p, author, post_author, categories
         ORDER BY c.created_at DESC
         SKIP $skip
         LIMIT $limit
@@ -192,7 +193,8 @@ def search_comments(query: str, categories: list[str], skip: int, limit: int):
             p.id AS post_id,
             p.content AS post_content,
             p.created_at AS post_created_at,
-            post_author.username AS post_author
+            post_author.username AS post_author,
+            categories
         """,
         query=query,
         skip=skip,
@@ -211,6 +213,9 @@ def search_comments(query: str, categories: list[str], skip: int, limit: int):
             if isinstance(dt, Neo4jDateTime):
                 dt = dt.to_native()
             item[field] = dt.strftime("%d %b %Y • %H:%M")
+
+        # sicurezza → sempre lista
+        item["categories"] = item.get("categories") or []
 
         formatted.append(item)
 

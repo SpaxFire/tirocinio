@@ -131,17 +131,26 @@ async def get_user_posts_paginated(username: str, skip: int, limit: int, my_id: 
         """
         MATCH (u:User {username: $username})-[:CREATED]->(p:Post)
 
+        // ---- LIKE COUNT ----
         OPTIONAL MATCH (p)<-[:LIKES]-(liker:User)
         WITH u, p, count(DISTINCT liker) AS like_count
 
+        // ---- COMMENT COUNT ----
         OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
         WITH u, p, like_count, count(DISTINCT c) AS comment_count
 
+        // ---- CATEGORIES ----
+        OPTIONAL MATCH (p)-[:IN_CATEGORY]->(cat:Category)
+        WITH u, p, like_count, comment_count,
+             collect(DISTINCT cat.name) AS categories
+
+        // ---- CURRENT USER ----
         OPTIONAL MATCH (me:User {id: $my_id})
         OPTIONAL MATCH (me)-[ml:LIKES]->(p)
         OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
 
-        WITH u, p, like_count, comment_count, ml, count(DISTINCT myComment) AS my_comments
+        WITH u, p, like_count, comment_count, categories,
+             ml, count(DISTINCT myComment) AS my_comments
 
         ORDER BY p.created_at DESC
         SKIP $skip
@@ -156,6 +165,7 @@ async def get_user_posts_paginated(username: str, skip: int, limit: int, my_id: 
             u.profile_image AS profile_image,
             like_count,
             comment_count,
+            categories,
             CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me,
             CASE WHEN my_comments > 0 THEN true ELSE false END AS commented_by_me
         """,
@@ -177,6 +187,9 @@ async def get_user_posts_paginated(username: str, skip: int, limit: int, my_id: 
 
         post["created_at"] = created_at.strftime("%d %b %Y • %H:%M")
 
+        # sicurezza: se non ha categorie → lista vuota
+        post["categories"] = post.get("categories") or []
+
         formatted.append(post)
 
     return formatted
@@ -188,7 +201,12 @@ async def get_user_comments_paginated(username: str, skip: int, limit: int, my_i
         MATCH (c)-[:ON_POST]->(p:Post)
         MATCH (postAuthor:User)-[:CREATED]->(p)
 
-        WITH u, c, p, postAuthor
+        // ---- CATEGORIES DEL POST ----
+        OPTIONAL MATCH (p)-[:IN_CATEGORY]->(cat:Category)
+
+        WITH u, c, p, postAuthor,
+             collect(DISTINCT cat.name) AS categories
+
         ORDER BY c.created_at DESC
         SKIP $skip
         LIMIT $limit
@@ -203,7 +221,9 @@ async def get_user_comments_paginated(username: str, skip: int, limit: int, my_i
             p.created_at AS post_created_at,
 
             postAuthor.username AS post_author,
-            postAuthor.profile_image AS post_author_image
+            postAuthor.profile_image AS post_author_image,
+
+            categories
         """,
         username=username,
         skip=skip,
@@ -216,12 +236,15 @@ async def get_user_comments_paginated(username: str, skip: int, limit: int, my_i
     for record in records:
         comment = dict(record)
 
-        # Format dates
+        # ---- Format date ----
         for field in ["comment_created_at", "post_created_at"]:
             dt = comment[field]
             if isinstance(dt, Neo4jDateTime):
                 dt = dt.to_native()
             comment[field] = dt.strftime("%d %b %Y • %H:%M")
+
+        # sicurezza: se nessuna categoria → []
+        comment["categories"] = comment.get("categories") or []
 
         formatted.append(comment)
 
@@ -234,18 +257,26 @@ async def get_user_likes_paginated(username: str, skip: int, limit: int, my_id: 
 
         OPTIONAL MATCH (p)<-[:CREATED]-(author:User)
 
+        // ---- LIKE COUNT ----
         OPTIONAL MATCH (p)<-[:LIKES]-(liker:User)
         WITH u, p, author, count(DISTINCT liker) AS like_count
 
+        // ---- COMMENT COUNT ----
         OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
         WITH u, p, author, like_count, count(DISTINCT c) AS comment_count
 
+        // ---- CATEGORIES ----
+        OPTIONAL MATCH (p)-[:IN_CATEGORY]->(cat:Category)
+        WITH u, p, author, like_count, comment_count,
+             collect(DISTINCT cat.name) AS categories
+
+        // ---- CURRENT USER STATE ----
         OPTIONAL MATCH (me:User {id: $my_id})
         OPTIONAL MATCH (me)-[ml:LIKES]->(p)
         OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
 
-        WITH u, p, author, like_count, comment_count, ml,
-             count(DISTINCT myComment) AS my_comments
+        WITH u, p, author, like_count, comment_count, categories,
+             ml, count(DISTINCT myComment) AS my_comments
 
         ORDER BY p.created_at DESC
         SKIP $skip
@@ -260,6 +291,7 @@ async def get_user_likes_paginated(username: str, skip: int, limit: int, my_id: 
             author.profile_image AS profile_image,
             like_count,
             comment_count,
+            categories,
             CASE WHEN ml IS NULL THEN false ELSE true END AS liked_by_me,
             CASE WHEN my_comments > 0 THEN true ELSE false END AS commented_by_me
         """,
@@ -280,6 +312,9 @@ async def get_user_likes_paginated(username: str, skip: int, limit: int, my_id: 
             created_at = created_at.to_native()
 
         post["created_at"] = created_at.strftime("%d %b %Y • %H:%M")
+
+        # sicurezza: sempre lista
+        post["categories"] = post.get("categories") or []
 
         formatted.append(post)
 
@@ -331,7 +366,7 @@ def get_followers_paginated(username: str, skip: int, limit: int, my_id: str | N
         """
         // Trovo utente del profilo
         MATCH (u:User {username: $username})
-        MATCH (me:User {id: $my_id})
+        OPTIONAL MATCH (me:User {id: $my_id})
         MATCH (f:User)-[:FOLLOWS]->(u)
 
         // Paginazione prima per evitare di portare tutti i follower in memoria

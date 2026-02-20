@@ -52,6 +52,17 @@
             {{ post.content }}
         </p>
 
+        {% if post.categories %}
+        <div class="flex flex-wrap gap-2 mt-3">
+            {% for category in post.categories %}
+            <span hx-get="/search?tab=posts&categories={{ category }}" hx-target="#main-content" hx-push-url="true"
+                hx-trigger="click consume" class="relative z-30 text-xs font-medium px-3 py-1 category-tag">
+                #{{ category }}
+            </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% if post.media_urls %}
         {% set n = post.media_urls|length %}
 

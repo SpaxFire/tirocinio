@@ -90,6 +90,10 @@
         @apply ring-2 ring-transparent transition-all duration-200 hover:ring-blue-600;
     }
 
+
+    .category-tag {
+        @apply rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition cursor-pointer;
+    }
 }
 
 @layer utilities {

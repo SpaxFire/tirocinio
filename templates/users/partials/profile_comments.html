@@ -18,6 +18,17 @@
             <p class="text-sm text-gray-500 mt-1 line-clamp-2">
                 {{ item.post_content }}
             </p>
+            {% if item.categories %}
+            <div class="flex flex-wrap gap-2 mt-3">
+                {% for category in item.categories %}
+                <span hx-get="/search?tab=comments&categories={{ category }}" hx-target="#main-content"
+                    hx-push-url="true" hx-trigger="click consume"
+                    class="relative z-30 text-xs font-medium px-3 py-1 category-tag">
+                    #{{ category }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
 
             <span class="text-xs text-gray-400">
                 {{ item.post_created_at }}

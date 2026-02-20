@@ -50,8 +50,7 @@ function selectCategory(name) {
     document.getElementById("category-results").innerHTML = "";
 }
 
-document.addEventListener("htmx:afterSwap", function (evt) {
-    if (!evt.target.closest("#search-wrapper")) return;
+function initSelectedCategories() {
 
     const hidden = document.getElementById("categories-hidden");
     const container = document.getElementById("selected-categories");
@@ -63,12 +62,15 @@ document.addEventListener("htmx:afterSwap", function (evt) {
     if (!hidden.value) return;
 
     hidden.value.split(",").forEach(cat => {
-        // Crea tag
+
+        const clean = cat.trim();
+        if (!clean) return;
+
         const tag = document.createElement("div");
         tag.className = "bg-blue-100 px-2 py-1 rounded flex items-center gap-2";
 
         const text = document.createElement("span");
-        text.innerText = cat.trim();
+        text.innerText = clean;
 
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
@@ -76,13 +78,21 @@ document.addEventListener("htmx:afterSwap", function (evt) {
         removeBtn.className = "text-blue-700 hover:text-red-600 font-bold";
 
         removeBtn.onclick = function () {
-            removeCategory(cat.trim(), tag);
+            removeCategory(clean, tag);
         };
 
         tag.appendChild(text);
         tag.appendChild(removeBtn);
         container.appendChild(tag);
     });
+}
+
+document.body.addEventListener("htmx:afterSwap", function () {
+    initSelectedCategories();
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    initSelectedCategories();
 });
 
 /* DROPDOWN MANAGER */
