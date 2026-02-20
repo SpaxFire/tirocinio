@@ -165,6 +165,16 @@ async def login_htmx(
                 </div>
             </div>
         """)
+    
+    if not user.is_active:
+        return HTMLResponse("""
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-danger"
+                    hx-on::load="setTimeout(() => this.remove(), 4000)">
+                    Utente non attivo
+                </div>
+            </div>
+        """)
 
 
     access_token = create_access_token(

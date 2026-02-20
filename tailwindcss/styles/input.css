@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@source "../templates/**/*.html";
+@source "../../templates/**/*.html";
 
 @layer base {
     body {
@@ -38,7 +38,7 @@
     }
 
     .btn {
-        @apply cursor-pointer px-3 py-1.5 rounded-xl transition;
+        @apply cursor-pointer px-3 py-1.5 rounded-full transition;
     }
 
     .btn-icon {
@@ -59,27 +59,31 @@
 
 
     .btn-primary {
-        @apply cursor-pointer bg-blue-600 text-white hover:bg-blue-700 rounded-lg;
+        @apply cursor-pointer bg-blue-600 text-white hover:bg-blue-700 rounded-full disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:bg-gray-300;
+    }
+
+    .btn-secondary {
+        @apply cursor-pointer bg-black text-white hover:text-black hover:bg-white hover:outline-2 hover:outline-offset-2 hover:outline-black focus:text-white focus:bg-black rounded-full;
     }
 
     .btn-success {
-        @apply cursor-pointer bg-green-600 text-white hover:bg-green-700 rounded-lg;
+        @apply cursor-pointer bg-green-600 text-white hover:bg-green-700 rounded-full;
     }
 
     .btn-danger {
-        @apply cursor-pointer bg-red-600 text-white hover:bg-red-700 rounded-lg;
+        @apply cursor-pointer bg-red-600 text-white hover:bg-red-700 rounded-full;
     }
 
     .btn-danger-transition {
-        @apply cursor-pointer bg-gray-200 text-black hover:bg-red-600 hover:text-white transition rounded-lg;
+        @apply cursor-pointer bg-gray-200 text-black hover:bg-red-600 hover:text-white transition rounded-full;
     }
 
     .msg-success {
-        @apply text-green-600 bg-green-50 p-3 mb-3 rounded-lg;
+        @apply text-green-600 bg-green-50 p-3 mb-3 rounded-full;
     }
 
     .msg-danger {
-        @apply text-red-600 bg-red-50 p-3 mb-3 rounded-lg;
+        @apply text-red-600 bg-red-50 p-3 mb-3 rounded-full;
     }
 
     .img-hover {

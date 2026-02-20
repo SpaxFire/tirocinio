@@ -8,7 +8,7 @@
                 <!-- Avatar con link al profilo -->
                 <a hx-get="/u/{{ post.author }}" hx-target="#main-content" hx-push-url="true" hx-trigger="click consume"
                     class="relative z-30 flex items-center gap-3 px-2 py-1 -mx-2 -my-1 rounded-lg no-underline hover:bg-gray-100 transition">
-                    <img src="{{ profile_image or url_for('static', path='images/default_avatar.png') }}"
+                    <img src="{{ post.profile_image or url_for('static', path='images/default_avatar.png') }}"
                         class="w-10 h-10 rounded-full object-cover ring-2 ring-transparent transition-all duration-200 group-hover/avatar:ring-blue-600">
 
                     <span class="font-semibold text-gray-800">
@@ -163,7 +163,7 @@
                 {% endwith %}
             </div>
         </div>
-        <div id="comments-{{ post.id }}" hx-get="/posts/{{ post.id }}/comments?source=feed" hx-trigger="revealed"
+        <div id="comments-{{ post.id }}" hx-get="/posts/{{ post.id }}/comments?source=feed" hx-trigger="intersect once"
             hx-target="this" hx-swap="innerHTML" hx-push-url="false" class="mt-4 text-sm space-y-2 relative z-30">
         </div>
     </div>

@@ -22,7 +22,14 @@
             </div>
 
             <!-- Follow button -->
-            {% if current_user(request).username != user.username %}
+            {% if current_user(request).username == user.username %}
+            <div class="mt-4">
+                <button hx-get="/u/{{ user.username }}/edit-modal" hx-target="#modal-container" hx-swap="innerHTML"
+                    class="px-5 py-2 rounded-full transition btn-secondary">
+                    Impostazioni
+                </button>
+            </div>
+            {% else %}
             <div id="follow-btn-{{ user.username }}" class="mt-4">
                 {% with
                 username=user.username,
@@ -39,7 +46,7 @@
 
         <!-- Tabs -->
         <div class="mt-6 border-b border-gray-700">
-            <nav id="profile-tabs" class="flex space-x-8 text-gray-400 font-medium justify-between" hx-on:click="
+            <nav id="profile-tabs" class="grid grid-cols-5 text-gray-400 font-medium justify-between" hx-on:click="
         if(event.target.classList.contains('nav-item')){
             document.querySelectorAll('#profile-tabs .nav-item')
                 .forEach(el => el.classList.remove('active'));

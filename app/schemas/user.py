@@ -5,17 +5,13 @@ class UserBase(BaseModel):
     id: str
     username: str
     email: str | None = None
-
-class UserPublic(BaseModel):
-    id: str
-    username: str
-    email: str | None = None
     role: str = "USER"
     bio: str | None = None
     profile_image: str | None = None
     created_at: datetime | None = None
     is_active: bool = True
 
+class UserPublic(UserBase):
     post_count: int = 0
     follower_count: int = 0
     following_count: int = 0
@@ -24,8 +20,6 @@ class UserPublic(BaseModel):
 
 class UserInDB(UserBase):
     password_hash: str
-    role: str
-    is_active: bool
 
 class UserCreate(BaseModel):
     username: str

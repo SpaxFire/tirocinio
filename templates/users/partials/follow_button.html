@@ -1,7 +1,7 @@
 <div id="follow-btn-{{ username }}">
 
     <button hx-post="/u/{{ username }}/follow" hx-target="#follow-btn-{{ username }}" hx-swap="innerHTML"
-        hx-trigger="click consume" class="px-5 py-2 rounded-full transition
+        hx-trigger="click consume" hx-push-url="false" class="px-5 py-2 rounded-full transition
         {% if following %}
             btn-danger-transition
         {% else %}

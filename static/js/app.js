@@ -1,30 +1,3 @@
-document.body.addEventListener("htmx:afterOnLoad", function (evt) {
-
-    const url = window.location.pathname;
-
-    document.querySelectorAll(".nav-link").forEach(link => {
-        link.classList.remove("bg-gray-200");
-        if (link.getAttribute("hx-get") === url) {
-            link.classList.add("bg-gray-200");
-        }
-    });
-
-});
-
-function setActiveMenu() {
-    const url = window.location.pathname;
-
-    document.querySelectorAll(".nav-link").forEach(link => {
-        link.classList.remove("bg-gray-200");
-        if (link.getAttribute("hx-get") === url) {
-            link.classList.add("bg-gray-200");
-        }
-    });
-}
-
-document.addEventListener("DOMContentLoaded", setActiveMenu);
-document.body.addEventListener("htmx:afterOnLoad", setActiveMenu);
-
 function addCategory(name) {
 
     const container = document.getElementById("selected-categories");
@@ -76,6 +49,41 @@ function selectCategory(name) {
     addCategory(name);
     document.getElementById("category-results").innerHTML = "";
 }
+
+document.addEventListener("htmx:afterSwap", function (evt) {
+    if (!evt.target.closest("#search-wrapper")) return;
+
+    const hidden = document.getElementById("categories-hidden");
+    const container = document.getElementById("selected-categories");
+
+    if (!hidden || !container) return;
+
+    container.innerHTML = "";
+
+    if (!hidden.value) return;
+
+    hidden.value.split(",").forEach(cat => {
+        // Crea tag
+        const tag = document.createElement("div");
+        tag.className = "bg-blue-100 px-2 py-1 rounded flex items-center gap-2";
+
+        const text = document.createElement("span");
+        text.innerText = cat.trim();
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.innerHTML = "✕";
+        removeBtn.className = "text-blue-700 hover:text-red-600 font-bold";
+
+        removeBtn.onclick = function () {
+            removeCategory(cat.trim(), tag);
+        };
+
+        tag.appendChild(text);
+        tag.appendChild(removeBtn);
+        container.appendChild(tag);
+    });
+});
 
 /* DROPDOWN MANAGER */
 document.addEventListener("click", function (e) {

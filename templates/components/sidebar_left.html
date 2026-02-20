@@ -20,7 +20,10 @@
         Ricerca
     </a>
 
-    <a hx-get="/profile/me" hx-target="#main-content" hx-push-url="true"
+    {% set current_user = current_user(request) %}
+    <a hx-get="{{ '/u/' ~ current_user.username if current_user else '/login/modal' }}"
+        hx-target="{{ '#main-content' if current_user else '#modal-container' }}"
+        hx-push-url="{{ 'true' if current_user else 'false' }}"
         class="nav-link p-2 rounded-lg hover:bg-gray-100 cursor-pointer no-underline flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
             class="size-6">

@@ -296,12 +296,13 @@ async def post_feed(
     posts = await post_crud.get_posts_paginated(skip, page_size, user.id if user else None)
 
     return templates.TemplateResponse(
-        "posts/feed.html",
+        "partials/feed.html",
         {
             "request": request,
             "posts": posts,
             "next_page": page + 1,
-            "has_more": len(posts) == page_size
+            "has_more": len(posts) == page_size,
+            "pagination_url": "/posts/feed"
         }
     )
 

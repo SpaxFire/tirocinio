@@ -16,7 +16,7 @@ async def get_comments(
     post_id: str,
     source: str = "feed"
 ):
-    limit = 5 if source == "feed" else 0
+    limit = 3 if source == "feed" else None
 
     comments = await comment_crud.get_comments_of_post(
         post_id,
@@ -35,7 +35,7 @@ async def get_comments(
             "post_id": post_id,
             "source": source,
             "show_all_button": show_all_button,
-            "remain_count": total_count - limit,
+            "remain_count": total_count - (limit if limit else 0),
         }
     )
 

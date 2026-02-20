@@ -4,6 +4,7 @@ from neo4j.time import DateTime as Neo4jDateTime
 from app.db.neo4j import driver
 from app.schemas.user import UserInDB, UserPublic
 
+
 def get_user_by_username(username: str) -> UserInDB | None:
 
     query = """
@@ -12,7 +13,6 @@ def get_user_by_username(username: str) -> UserInDB | None:
     """
 
     with driver.session() as session:
-
         record = session.run(query, username=username).single()
 
         if not record:
@@ -26,6 +26,9 @@ def get_user_by_username(username: str) -> UserInDB | None:
             email=u.get("email"),
             password_hash=u["password_hash"],
             role=u.get("role", "USER"),
+            bio=u.get("bio"),
+            profile_image=u.get("profile_image"),
+            created_at=u.get("created_at").to_native() if u.get("created_at") else None,
             is_active=u.get("is_active", True),
         )
     
@@ -326,10 +329,17 @@ def get_user_with_counts(username: str, my_id: str | None):
 def get_followers_paginated(username: str, skip: int, limit: int, my_id: str | None):
     records, _, _ = driver.execute_query(
         """
+        // Trovo utente del profilo
         MATCH (u:User {username: $username})
+        MATCH (me:User {id: $my_id})
         MATCH (f:User)-[:FOLLOWS]->(u)
 
-        OPTIONAL MATCH (me:User {id: $my_id})
+        // Paginazione prima per evitare di portare tutti i follower in memoria
+        WITH f, me
+        ORDER BY f.username
+        SKIP $skip
+        LIMIT $limit
+
         OPTIONAL MATCH (me)-[rel:FOLLOWS]->(f)
 
         RETURN
@@ -337,10 +347,10 @@ def get_followers_paginated(username: str, skip: int, limit: int, my_id: str | N
             f.username AS username,
             f.bio AS bio,
             f.profile_image AS profile_image,
-            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me
-        ORDER BY f.username
-        SKIP $skip
-        LIMIT $limit
+            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me,
+
+            // Conteggio follower di f
+            SIZE([(f)<-[:FOLLOWS]-(:User) | 1]) AS follower_count
         """,
         username=username,
         skip=skip,
@@ -351,12 +361,22 @@ def get_followers_paginated(username: str, skip: int, limit: int, my_id: str | N
 
     return [dict(record) for record in records]
 
-def get_following_paginated( username: str, skip: int, limit: int, my_id: str | None):
+def get_following_paginated(username: str, skip: int, limit: int, my_id: str | None):
     records, _, _ = driver.execute_query(
         """
+        // Trovo utente profilo
         MATCH (u:User {username: $username})
+
+        // Utenti che segue
         MATCH (u)-[:FOLLOWS]->(f:User)
 
+        // Paginazione prima per evitare di portare tutti i follower in memoria
+        WITH f
+        ORDER BY f.username
+        SKIP $skip
+        LIMIT $limit
+
+        // Verifico se io seguo f
         OPTIONAL MATCH (me:User {id: $my_id})
         OPTIONAL MATCH (me)-[rel:FOLLOWS]->(f)
 
@@ -365,10 +385,10 @@ def get_following_paginated( username: str, skip: int, limit: int, my_id: str | 
             f.username AS username,
             f.bio AS bio,
             f.profile_image AS profile_image,
-            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me
-        ORDER BY f.username
-        SKIP $skip
-        LIMIT $limit
+            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me,
+
+            // Numero follower di f
+            SIZE([(f)<-[:FOLLOWS]-(:User) | 1]) AS follower_count
         """,
         username=username,
         skip=skip,
@@ -416,3 +436,132 @@ def create_user(username: str, email: str, password_hash: str):
         password_hash=password_hash)
 
         return result.single()["u"]
+
+def update_profile(user_id: str, username: str, bio: str, profile_image: str):
+
+    with driver.session() as session:
+
+        # controllo username duplicato (se cambiato)
+        check = session.run("""
+            MATCH (u:User)
+            WHERE u.username = $username AND u.id <> $user_id
+            RETURN u LIMIT 1
+        """, username=username, user_id=user_id).single()
+
+        if check:
+            return False
+
+        session.run("""
+            MATCH (u:User {id: $user_id})
+            SET u.username = $username,
+                u.bio = $bio,
+                u.profile_image = $profile_image
+        """,
+        user_id=user_id,
+        username=username,
+        bio=bio,
+        profile_image=profile_image)
+
+        return True
+
+def update_email(user_id: str, email: str):
+
+    with driver.session() as session:
+
+        check = session.run("""
+            MATCH (u:User)
+            WHERE u.email = $email AND u.id <> $user_id
+            RETURN u LIMIT 1
+        """, email=email, user_id=user_id).single()
+
+        if check:
+            return False  # email già usata
+
+        session.run("""
+            MATCH (u:User {id: $user_id})
+            SET u.email = $email
+        """, user_id=user_id, email=email)
+
+        return True
+
+def update_password(user_id: str, password_hash: str):
+
+    with driver.session() as session:
+        session.run("""
+            MATCH (u:User {id: $user_id})
+            SET u.password_hash = $password_hash
+        """,
+        user_id=user_id,
+        password_hash=password_hash)
+
+    return True
+
+def deactivate_user(user_id: str):
+    with driver.session() as session:
+        session.run("""
+            MATCH (u:User {id: $user_id})
+            SET u.is_active = false
+        """, user_id=user_id)
+
+def search_users(query: str, bio: str, skip: int, limit: int, my_id: str | None):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (u:User)
+        WHERE
+            ($query = "" OR toLower(u.username) CONTAINS toLower($query))
+        AND
+            ($bio = "" OR u.bio IS NOT NULL AND toLower(u.bio) CONTAINS toLower($bio))
+
+        WITH u
+        ORDER BY u.username
+        SKIP $skip
+        LIMIT $limit
+
+        OPTIONAL MATCH (me:User {id: $my_id})
+        OPTIONAL MATCH (me)-[rel:FOLLOWS]->(u)
+
+        RETURN
+            u.id AS id,
+            u.username AS username,
+            u.bio AS bio,
+            u.profile_image AS profile_image,
+            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me,
+            SIZE([(u)<-[:FOLLOWS]-(:User) | 1]) AS follower_count
+        """,
+        query=query,
+        skip=skip,
+        limit=limit,
+        my_id=my_id,
+        bio=bio,
+        database_="neo4j"
+    )
+
+    return [dict(record) for record in records]
+
+def get_all_users_paginated(skip: int, limit: int, my_id: str | None):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (u:User)
+        WITH u
+        ORDER BY u.username
+        SKIP $skip
+        LIMIT $limit
+
+        OPTIONAL MATCH (me:User {id: $my_id})
+        OPTIONAL MATCH (me)-[rel:FOLLOWS]->(u)
+
+        RETURN
+            u.id AS id,
+            u.username AS username,
+            u.bio AS bio,
+            u.profile_image AS profile_image,
+            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me,
+            SIZE([(u)<-[:FOLLOWS]-(:User) | 1]) AS follower_count
+        """,
+        skip=skip,
+        limit=limit,
+        my_id=my_id,
+        database_="neo4j"
+    )
+
+    return [dict(record) for record in records]

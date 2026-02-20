@@ -1,0 +1,127 @@
+{% set content %}
+<h2 class="font-semibold mb-6">Impostazioni account</h2>
+
+<div class="flex-col gap-8">
+
+    <!-- ========================= -->
+    <!-- SEZIONE PROFILO PUBBLICO -->
+    <!-- ========================= -->
+    <div>
+        <h3 class="font-semibold mb-3">Profilo pubblico</h3>
+
+        <form hx-post="/u/{{ user.username }}/update" hx-swap="none" enctype="multipart/form-data"
+            class="flex flex-col gap-3">
+
+            <input type="hidden" name="section" value="profile">
+
+            <input type="text" name="username" value="{{ user.username }}" class="border rounded p-2"
+                placeholder="Username">
+
+            <textarea name="bio" rows="1" class="border rounded p-2" placeholder="Bio">{{ user.bio }}</textarea>
+
+            <input type="file" name="profile_image">
+
+            <div class="flex justify-end">
+                <button class="btn-primary px-4 py-2">
+                    Salva profilo
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ========================= -->
+    <!-- SEZIONE EMAIL -->
+    <!-- ========================= -->
+    <div>
+        <h3 class="font-semibold mb-3">Email</h3>
+
+        <form hx-post="/u/{{ user.username }}/update" hx-swap="none" class="flex flex-col gap-3">
+
+            <input type="hidden" name="section" value="email">
+
+            <input type="email" name="email" value="{{ user.email }}" class="border rounded p-2">
+
+            <div class="flex justify-end">
+                <button class="btn-primary px-4 py-2">
+                    Aggiorna email
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ========================= -->
+    <!-- SEZIONE PASSWORD -->
+    <!-- ========================= -->
+    <div>
+        <h3 class="font-semibold mb-3">Password</h3>
+
+        <form id="password-form" hx-post="/u/{{ user.username }}/update" hx-swap="none" class="flex flex-col gap-3">
+
+            <input type="hidden" name="section" value="password">
+
+            <input type="password" name="current_password" placeholder="Password attuale" class="border rounded p-2">
+
+            <input type="password" id="new-password" name="new_password" placeholder="Nuova password"
+                class="border rounded p-2">
+
+            <input type="password" id="confirm-password" name="new_password_confirm"
+                placeholder="Conferma nuova password" class="border rounded p-2">
+
+            <!-- messaggio dinamico -->
+            <p id="password-match-message" class="text-sm h-4"></p>
+
+            <div class="flex justify-end">
+                <button id="password-submit" class="btn-primary px-4 py-2" disabled>
+                    Cambia password
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ========================= -->
+    <!-- DANGER ZONE -->
+    <!-- ========================= -->
+    <div class="border-t pt-6 mt-6">
+        <h3 class="text-red-600 font-semibold mb-3">Zona pericolosa</h3>
+
+        <button hx-get="/u/{{ user.username }}/delete-modal" hx-target="#modal-container" hx-swap="innerHTML"
+            class="btn-danger px-4 py-2">
+            Elimina account
+        </button>
+    </div>
+
+</div>
+{% endset %}
+<script>
+    document.addEventListener("input", function (e) {
+
+        const newPassword = document.getElementById("new-password");
+        const confirmPassword = document.getElementById("confirm-password");
+        const message = document.getElementById("password-match-message");
+        const submitBtn = document.getElementById("password-submit");
+
+        if (!newPassword || !confirmPassword) return;
+
+        const pwd = newPassword.value;
+        const confirm = confirmPassword.value;
+
+        if (!pwd && !confirm) {
+            message.textContent = "";
+            message.className = "";
+            submitBtn.disabled = true;
+            return;
+        }
+
+        if (pwd === confirm) {
+            message.textContent = "Le password coincidono ✓";
+            message.className = "msg-success";
+            submitBtn.disabled = false;
+        } else {
+            message.textContent = "Le password non coincidono";
+            message.className = "msg-danger";
+            submitBtn.disabled = true;
+        }
+    });
+</script>
+
+{% include "components/modal.html" %}

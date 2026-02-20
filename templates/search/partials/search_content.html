@@ -1,0 +1,92 @@
+<div class="max-w-3xl mx-auto" id="search-wrapper">
+
+    <!-- Search Bar -->
+    <div class="bg-white shadow rounded-xl p-4 mb-4">
+
+        <form hx-get="/search" hx-target="#search-wrapper" hx-push-url="true" class="flex flex-col gap-4">
+
+            <!-- Riga 1: Search principale -->
+            <div class="flex gap-2">
+                <input type="text" name="q" value="{{ query }}" placeholder="Cerca..."
+                    class="flex-1 border rounded-lg px-3 py-2">
+
+                <input type="hidden" name="tab" value="{{ active_tab }}">
+
+                <button class="btn-primary px-4">
+                    Cerca
+                </button>
+            </div>
+
+            <!-- Riga 2: Filtri -->
+            {% if active_tab in ['posts', 'comments'] %}
+            <div class="relative flex flex-col gap-2">
+
+
+                <input id="category-input" hx-get="/categories/search"
+                    hx-trigger="click, input changed delay:400ms, keyup[key=='Enter']" hx-target="#category-results"
+                    hx-swap="innerHTML" hx-push-url="false" onblur="closeCategoryDropdown()"
+                    class="border rounded-lg p-2 w-full" placeholder="Filtra per categorie...">
+                <div id="category-results" data-dropdown data-trigger="category-input"
+                    class="absolute bg-white rounded-lg w-full mt-11 shadow z-50">
+                </div>
+
+                <!-- Categorie selezionate -->
+                <div id="selected-categories" class="flex gap-2 flex-wrap">
+                </div>
+
+                <input type="hidden" name="categories" id="categories-hidden"
+                    value="{{ request.query_params.get('categories','') }}">
+            </div>
+            {% endif %}
+
+            {% if active_tab == 'users' %}
+            <div>
+                <input type="text" name="bio" value="{{ request.query_params.get('bio','') }}"
+                    placeholder="Cerca nella bio..." class="border rounded-lg px-3 py-2 w-full">
+            </div>
+            {% endif %}
+
+        </form>
+    </div>
+
+    {% set current_categories = request.query_params.get('categories','') %}
+    {% set current_bio = request.query_params.get('bio','') %}
+
+    <!-- Tabs -->
+    <div class="flex gap-6 border-b mb-4">
+        <nav id="profile-tabs" class="grid grid-cols-3 text-gray-400 font-medium w-full">
+
+            <button hx-get="/search?q={{ query }}&tab=posts&categories={{ current_categories }}"
+                hx-target="#search-wrapper" hx-push-url="true"
+                class="py-3 nav-item cursor-pointer {{ 'active' if active_tab == 'posts' else '' }}">
+                Post
+            </button>
+
+            <button hx-get="/search?q={{ query }}&tab=users&bio={{ current_bio }}" hx-target="#search-wrapper"
+                hx-push-url="true" class="py-3 nav-item cursor-pointer {{ 'active' if active_tab == 'users' else '' }}">
+                Utenti
+            </button>
+
+            <button hx-get="/search?q={{ query }}&tab=comments&categories={{ current_categories }}"
+                hx-target="#search-wrapper" hx-push-url="true"
+                class="py-3 nav-item cursor-pointer {{ 'active' if active_tab == 'comments' else '' }}">
+                Commenti
+            </button>
+        </nav>
+    </div>
+
+    <!-- Results -->
+    <div id="search-results" class="space-y-4">
+
+        {% if active_tab == "posts" %}
+        {% include "partials/feed.html" %}
+        {% elif active_tab == "users" %}
+        {% include "partials/user_list.html" %}
+        {% elif active_tab == "comments" %}
+        {% include "users/partials/profile_comments.html" %}
+        {% endif %}
+
+
+    </div>
+
+</div>

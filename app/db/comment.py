@@ -12,22 +12,26 @@ async def get_comments_of_post(
 
     query = """
     MATCH (p:Post {id: $post_id})
-    MATCH (u:User)-[:CREATED]->(c:Comment)-[:ON_POST]->(p)
+    MATCH (c:Comment)-[:ON_POST]->(p)
+    WITH c
+    ORDER BY c.created_at DESC
+    """
+
+    params = {"post_id": post_id}
+
+    if limit is not None:
+        query += "\nLIMIT $limit"
+        params["limit"] = limit
+
+    query += """
+    MATCH (u:User)-[:CREATED]->(c)
     RETURN
         c.id AS id,
         c.content AS text,
         u.username AS author,
         u.profile_image AS profile_image,
         c.created_at AS created_at
-    ORDER BY c.created_at DESC
     """
-
-    if limit:
-        query += "\nLIMIT $limit"
-
-    params = {"post_id": post_id}
-    if limit:
-        params["limit"] = limit
 
     with driver.session() as session:
         result = session.run(query, **params)
@@ -155,3 +159,100 @@ def delete_comment(comment_id: str):
         id=comment_id,
         database_="neo4j",
     )
+
+def search_comments(query: str, categories: list[str], skip: int, limit: int):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (author:User)-[:CREATED]->(c:Comment)-[:ON_POST]->(p:Post)
+        OPTIONAL MATCH (p)-[:IN_CATEGORY]->(cat:Category)
+
+        WITH 
+            c, p, author,
+            [x IN collect(cat.name) | trim(toLower(x))] AS postCategories,
+            [y IN $categories | trim(toLower(y))] AS filterCategories
+
+        WHERE 
+            ($query = "" OR toLower(c.content) CONTAINS toLower($query))
+        AND
+            (SIZE(filterCategories) = 0 
+                OR ANY(catName IN postCategories WHERE catName IN filterCategories))
+
+        MATCH (post_author:User)-[:CREATED]->(p)
+
+        WITH DISTINCT c, p, author, post_author
+        ORDER BY c.created_at DESC
+        SKIP $skip
+        LIMIT $limit
+
+        RETURN
+            c.id AS comment_id,
+            author.username AS comment_author,
+            c.content AS comment_content,
+            c.created_at AS comment_created_at,
+            p.id AS post_id,
+            p.content AS post_content,
+            p.created_at AS post_created_at,
+            post_author.username AS post_author
+        """,
+        query=query,
+        skip=skip,
+        limit=limit,
+        categories=categories,
+        database_="neo4j"
+    )
+
+    formatted = []
+
+    for record in records:
+        item = dict(record)
+
+        for field in ["comment_created_at", "post_created_at"]:
+            dt = item[field]
+            if isinstance(dt, Neo4jDateTime):
+                dt = dt.to_native()
+            item[field] = dt.strftime("%d %b %Y • %H:%M")
+
+        formatted.append(item)
+
+    return formatted
+
+def get_all_comments_paginated(skip: int, limit: int):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (author:User)-[:CREATED]->(c:Comment)-[:ON_POST]->(p:Post)
+        MATCH (post_author:User)-[:CREATED]->(p)
+
+        WITH c, p, author, post_author
+        ORDER BY c.created_at DESC
+        SKIP $skip
+        LIMIT $limit
+
+        RETURN
+            c.id AS comment_id,
+            author.username AS comment_author,
+            c.content AS comment_content,
+            c.created_at AS comment_created_at,
+            p.id AS post_id,
+            p.content AS post_content,
+            p.created_at AS post_created_at,
+            post_author.username AS post_author
+        """,
+        skip=skip,
+        limit=limit,
+        database_="neo4j"
+    )
+
+    formatted = []
+
+    for record in records:
+        item = dict(record)
+
+        for field in ["comment_created_at", "post_created_at"]:
+            dt = item[field]
+            if isinstance(dt, Neo4jDateTime):
+                dt = dt.to_native()
+            item[field] = dt.strftime("%d %b %Y • %H:%M")
+
+        formatted.append(item)
+
+    return formatted

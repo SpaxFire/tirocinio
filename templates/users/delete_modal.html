@@ -1,0 +1,35 @@
+{% set content %}
+<h2 class="text-lg font-semibold mb-4">
+    Conferma eliminazione account
+</h2>
+
+<p class="mb-4">
+    Questa azione non è reversibile.
+    <br>Inserisci la password per continuare.
+</p>
+
+<form hx-post="/u/{{ user.username }}/delete" hx-target="#modal-container" hx-swap="innerHTML"
+    class="flex flex-col gap-4">
+
+    <!-- Password full width -->
+    <input type="password" name="password" placeholder="Password" class="w-full border rounded p-2" required>
+
+    <!-- Footer bottoni -->
+    <div class="flex justify-between items-center mt-2">
+
+        <!-- Indietro -->
+        <button type="button" hx-get="/empty" hx-target="#modal-container" hx-swap="innerHTML"
+            class="btn-ghost px-4 py-2 rounded-full">
+            Indietro
+        </button>
+
+        <!-- Elimina -->
+        <button type="submit" class="btn-danger px-4 py-2 rounded-full">
+            Elimina
+        </button>
+
+    </div>
+</form>
+{% endset %}
+
+{% include "components/modal.html" %}
