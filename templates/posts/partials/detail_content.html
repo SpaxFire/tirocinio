@@ -27,7 +27,8 @@
         <div class="flex items-center gap-3">
 
             {% set user = current_user(request) %}
-            {% if user and user.username == post.author %}
+            {% if user and (user.username == post.author or user.role == "ADMIN") %}
+
             <button hx-get="/posts/{{ post.id }}/edit-modal?source=detail" hx-target="#modal-container"
                 hx-swap="innerHTML" class="relative z-30 btn-icon transition">
                 <!-- icona matita -->

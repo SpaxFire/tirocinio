@@ -32,7 +32,7 @@
             </div>
 
             {% set user = current_user(request) %}
-            {% if user and user.username == comment.author %}
+            {% if user and (user.username == comment.author or user.role == "ADMIN") %}
             <div class="flex gap-2 opacity-0 group-hover/comment:opacity-100 transition">
 
                 <!-- EDIT -->

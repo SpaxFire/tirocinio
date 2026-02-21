@@ -165,10 +165,11 @@ async def edit_comment_modal(
 ):
     comment = comment_crud.get_comment_by_id(comment_id)
     if not comment:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Commento non trovato")
 
-    if not user or user.username != comment.author:
-        raise HTTPException(status_code=403)
+    # controllo che l'utente sia l'autore del commento o un admin
+    if not user or (user.username != comment.author and user.role != "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permesso negato")
 
     return templates.TemplateResponse(
         "comments/edit_modal.html",
@@ -189,10 +190,11 @@ async def update_comment(
 ):
     comment = comment_crud.get_comment_by_id(comment_id)
     if not comment:
-        raise HTTPException(status_code=404)
-
-    if not user or user.username != comment.author:
-        raise HTTPException(status_code=403)
+        raise HTTPException(status_code=404, detail="Commento non trovato")
+    
+    # controllo che l'utente sia l'autore del commento o un admin
+    if not user or (user.username != comment.author and user.role != "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permesso negato")
 
     if not content.strip():
         return HTMLResponse("""
@@ -239,10 +241,11 @@ async def delete_comment_modal(
 ):
     comment = comment_crud.get_comment_by_id(comment_id)
     if not comment:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Commento non trovato")
 
-    if not user or user.username != comment.author:
-        raise HTTPException(status_code=403)
+    # controllo che l'utente sia l'autore del commento o un admin
+    if not user or (user.username != comment.author and user.role != "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permesso negato")
 
     return templates.TemplateResponse(
         "comments/delete_modal.html",
@@ -262,10 +265,11 @@ async def delete_comment(
 ):
     comment = comment_crud.get_comment_by_id(comment_id)
     if not comment:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Commento non trovato")
 
-    if not user or user.username != comment.author:
-        raise HTTPException(status_code=403)
+    # controllo che l'utente sia l'autore del commento o un admin
+    if not user or (user.username != comment.author and user.role != "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permesso negato")
 
     post_id = comment.post_id
 

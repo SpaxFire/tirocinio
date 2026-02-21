@@ -241,8 +241,10 @@ async def edit_user_modal(
     request: Request,
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    if not user or user.username != username:
+    if not user or (user.role != "ADMIN" and user.username != username):
         raise HTTPException(status_code=403)
+    
+    user = user_crud.get_user_by_username(username)
 
     return templates.TemplateResponse(
         "users/edit_modal.html",
@@ -271,10 +273,12 @@ async def update_user(
     new_password: str | None = Form(None),
     new_password_confirm: str | None = Form(None),
 
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    current_user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    if not user or user.username != username:
+    if not current_user or (current_user.role != "ADMIN" and current_user.username != username):
         raise HTTPException(status_code=403)
+    
+    target_user = user_crud.get_user_by_username(username)
 
     msg_success = ""
     msg_error = ""
@@ -289,13 +293,13 @@ async def update_user(
             avatar_url = await save_post_media([profile_image])
             avatar_url = avatar_url[0]
         else:
-            avatar_url = user.profile_image
+            avatar_url = target_user.profile_image
 
         if not username_new or not username_new.strip():
             msg_error = "Username obbligatorio"
         else:
             result = user_crud.update_profile(
-                user.id,
+                target_user.id,
                 username_new.strip(),
                 bio.strip() if bio else "",
                 avatar_url
@@ -312,7 +316,7 @@ async def update_user(
         if not email:
             msg_error = "Email obbligatoria"
         else:
-            result = user_crud.update_email(user.id, email)
+            result = user_crud.update_email(target_user.id, email)
             if result:
                 msg_success = "Email aggiornata"
             else:
@@ -322,23 +326,33 @@ async def update_user(
     # SEZIONE PASSWORD
     # ======================
     elif section == "password":
-        if not current_password or not new_password:
-            msg_error = "Campi obbligatori"
-        elif not verify_password(current_password, user.password_hash):
-            msg_error = "Password attuale errata"
-        else:
-            hashed = hash_password(new_password)
+        if not new_password:
+            msg_error = "Nuova password obbligatoria"
 
-            result = user_crud.update_password(user.id, hashed)
-            if not result:
-                msg_success = "Password aggiornata"
-            else:
-                msg_error = "Errore durante l'aggiornamento della password"
+        elif new_password != new_password_confirm:
+            msg_error = "Le password non coincidono"
+        else:
+            # 👤 USER normale → serve password attuale
+            if current_user.role != "ADMIN":
+                if not current_password:
+                    msg_error = "Password attuale obbligatoria"
+
+                elif not verify_password(current_password, target_user.password_hash):
+                    msg_error = "Password attuale errata"
+
+            if not msg_error:
+                hashed = hash_password(new_password)
+                result = user_crud.update_password(target_user.id, hashed)
+
+                if result:
+                    msg_success = "Password aggiornata"
+                else:
+                    msg_error = "Errore durante l'aggiornamento"
 
     # recupero utente aggiornato
     updated_user = user_crud.get_user_profile_by_username(
         username_new if section == "profile" else username,
-        user.id
+        current_user.id
     )
 
     html = templates.get_template("users/partials/profile_content.html").render(

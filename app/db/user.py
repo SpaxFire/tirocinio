@@ -215,10 +215,13 @@ async def get_user_comments_paginated(username: str, skip: int, limit: int, my_i
             c.id AS comment_id,
             c.content AS comment_content,
             c.created_at AS comment_created_at,
+            u.username AS comment_author,
+            u.profile_image AS comment_author_image,
 
             p.id AS post_id,
             p.content AS post_content,
             p.created_at AS post_created_at,
+            p.media_urls AS post_media_urls,
 
             postAuthor.username AS post_author,
             postAuthor.profile_image AS post_author_image,
@@ -596,6 +599,45 @@ def get_all_users_paginated(skip: int, limit: int, my_id: str | None):
         skip=skip,
         limit=limit,
         my_id=my_id,
+        database_="neo4j"
+    )
+
+    return [dict(record) for record in records]
+
+def discover_users_from_followed(
+    my_id: str,
+    skip: int,
+    limit: int
+):
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (me:User {id: $my_id})-[:FOLLOWS]->(f:User)
+        MATCH (f)-[:FOLLOWS]->(u:User)
+
+        WHERE u.id <> $my_id
+        AND NOT (me)-[:FOLLOWS]->(u)
+
+        WITH u, count(DISTINCT f) AS score
+
+        ORDER BY score DESC, u.username
+        SKIP $skip
+        LIMIT $limit
+
+        OPTIONAL MATCH (me2:User {id: $my_id})
+        OPTIONAL MATCH (me2)-[rel:FOLLOWS]->(u)
+
+        RETURN
+            u.id AS id,
+            u.username AS username,
+            u.bio AS bio,
+            u.profile_image AS profile_image,
+            score,
+            CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me,
+            SIZE([(u)<-[:FOLLOWS]-(:User) | 1]) AS follower_count
+        """,
+        my_id=my_id,
+        skip=skip,
+        limit=limit,
         database_="neo4j"
     )
 

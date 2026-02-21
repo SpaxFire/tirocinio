@@ -187,13 +187,21 @@ def search_comments(query: str, categories: list[str], skip: int, limit: int):
 
         RETURN
             c.id AS comment_id,
+
+            author.id AS comment_author_id,
             author.username AS comment_author,
+            author.profile_image AS comment_author_image,
+
             c.content AS comment_content,
             c.created_at AS comment_created_at,
+
             p.id AS post_id,
             p.content AS post_content,
             p.created_at AS post_created_at,
+
             post_author.username AS post_author,
+            post_author.profile_image AS post_author_image,
+
             categories
         """,
         query=query,

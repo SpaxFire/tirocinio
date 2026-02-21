@@ -1,3 +1,29 @@
+function lockScroll() {
+
+    const body = document.body;
+
+    // evita doppia applicazione
+    if (body.classList.contains("scroll-locked")) return;
+
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (scrollBarWidth > 0) {
+        body.style.paddingRight = scrollBarWidth + "px";
+    }
+
+    body.classList.add("overflow-hidden");
+    body.classList.add("scroll-locked");
+}
+
+function unlockScroll() {
+
+    const body = document.body;
+
+    body.style.paddingRight = "";
+    body.classList.remove("overflow-hidden");
+    body.classList.remove("scroll-locked");
+}
+
 function addCategory(name) {
 
     const container = document.getElementById("selected-categories");
@@ -87,12 +113,31 @@ function initSelectedCategories() {
     });
 }
 
+function closeModal() {
+    const container = document.getElementById('modal-container');
+    if (container) container.innerHTML = '';
+    unlockScroll();
+}
+
 document.body.addEventListener("htmx:afterSwap", function () {
     initSelectedCategories();
 });
 
 document.addEventListener("DOMContentLoaded", function () {
     initSelectedCategories();
+});
+
+document.body.addEventListener('htmx:afterSwap', function (e) {
+    if (e.target.id === 'modal-container') {
+
+        const hasModal = e.target.querySelector('.fixed');
+
+        if (hasModal) {
+            lockScroll();
+        } else {
+            unlockScroll();
+        }
+    }
 });
 
 /* DROPDOWN MANAGER */

@@ -152,6 +152,7 @@ async def login_page(request: Request):
 async def login_htmx(
     username: str = Form(...),
     password: str = Form(...),
+    next: str = Form("/")
 ):
     user = authenticate_user(username, password)
 
@@ -182,21 +183,16 @@ async def login_htmx(
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
-    html = HTMLResponse(f"""
-        <div id="modal-container" hx-swap-oob="true"></div>
-        <div id="user-widget" hx-get="/auth/user-widget" hx-trigger="load" hx-swap-oob="true"></div>
-        <div id="feed" hx-get="/posts/feed" hx-trigger="load" hx-target="#feed" hx-swap="innerHTML" hx-swap-oob="true"></div>
-    """)
-
-
-    html.set_cookie(
+    response = Response(status_code=204)
+    response.headers["HX-Refresh"] = "true"
+    response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
         samesite="lax",
     )
 
-    return html
+    return response
 
 @router.get("/register/modal", response_class=HTMLResponse)
 async def register_modal(request: Request):

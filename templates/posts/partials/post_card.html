@@ -23,7 +23,7 @@
                 </span>
 
                 {% set user = current_user(request) %}
-                {% if user and user.username == post.author %}
+                {% if user and (user.username == post.author or user.role == "ADMIN") %}
 
                 <button hx-get="/posts/{{ post.id }}/edit-modal?source=feed" hx-push-url="false"
                     hx-target="#modal-container" hx-swap="innerHTML" hx-trigger="click consume"

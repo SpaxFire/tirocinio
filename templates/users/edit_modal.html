@@ -1,4 +1,7 @@
 {% set content %}
+{% set current_user = current_user(request) %}
+{% set is_admin = current_user.role == "ADMIN" %}
+{% set is_owner = current_user.username == user.username %}
 <h2 class="font-semibold mb-6">Impostazioni account</h2>
 
 <div class="flex-col gap-8">
@@ -55,11 +58,13 @@
     <div>
         <h3 class="font-semibold mb-3">Password</h3>
 
-        <form id="password-form" hx-post="/u/{{ user.username }}/update" hx-swap="none" class="flex flex-col gap-3">
+        <form hx-post="/u/{{ user.username }}/update" hx-swap="none" class="flex flex-col gap-3">
 
             <input type="hidden" name="section" value="password">
 
+            {% if not is_admin %}
             <input type="password" name="current_password" placeholder="Password attuale" class="border rounded p-2">
+            {% endif %}
 
             <input type="password" id="new-password" name="new_password" placeholder="Nuova password"
                 class="border rounded p-2">
@@ -67,7 +72,12 @@
             <input type="password" id="confirm-password" name="new_password_confirm"
                 placeholder="Conferma nuova password" class="border rounded p-2">
 
-            <!-- messaggio dinamico -->
+            {% if is_admin and not is_owner %}
+            <p class="text-sm text-yellow-500">
+                Stai reimpostando la password di questo utente.
+            </p>
+            {% endif %}
+
             <p id="password-match-message" class="text-sm h-4"></p>
 
             <div class="flex justify-end">

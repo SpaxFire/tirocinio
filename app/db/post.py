@@ -352,3 +352,82 @@ def search_posts(query: str, categories: list[str], skip: int, limit: int, my_id
         formatted.append(post)
 
     return formatted
+
+def discover_posts_from_followed_likes(
+    my_id: str,
+    skip: int,
+    limit: int
+):
+    driver = get_driver()
+
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (me:User {id: $my_id})-[:FOLLOWS]->(f:User)
+        MATCH (f)-[:LIKES]->(p:Post)
+        MATCH (author:User)-[:CREATED]->(p)
+
+        // escludo miei post
+        WHERE author.id <> $my_id
+
+        // escludo post già likati da me
+        AND NOT (me)-[:LIKES]->(p)
+
+        // escludo post già commentati da me
+        AND NOT (me)-[:CREATED]->(:Comment)-[:ON_POST]->(p)
+
+        // conteggio quanti followed hanno messo like
+        WITH p, author, count(DISTINCT f) AS score
+
+        // ---- LIKE COUNT TOTALE ----
+        OPTIONAL MATCH (p)<-[:LIKES]-(liker:User)
+        WITH p, author, score, count(DISTINCT liker) AS like_count
+
+        // ---- COMMENT COUNT ----
+        OPTIONAL MATCH (p)<-[:ON_POST]-(c:Comment)
+        WITH p, author, score, like_count,
+             count(DISTINCT c) AS comment_count
+
+        // ---- CATEGORIES ----
+        OPTIONAL MATCH (p)-[:IN_CATEGORY]->(cat:Category)
+        WITH p, author, score, like_count, comment_count,
+             collect(DISTINCT cat.name) AS categories
+
+        ORDER BY score DESC, p.created_at DESC
+        SKIP $skip
+        LIMIT $limit
+
+        RETURN
+            p.id AS id,
+            p.content AS content,
+            p.created_at AS created_at,
+            p.media_urls AS media_urls,
+            author.username AS author,
+            author.profile_image AS profile_image,
+            like_count,
+            comment_count,
+            categories,
+            score,
+            false AS liked_by_me,
+            false AS commented_by_me
+        """,
+        my_id=my_id,
+        skip=skip,
+        limit=limit,
+        database_="neo4j",
+    )
+
+    formatted = []
+
+    for record in records:
+        post = dict(record)
+
+        created_at = post["created_at"]
+        if isinstance(created_at, Neo4jDateTime):
+            created_at = created_at.to_native()
+
+        post["created_at"] = created_at.strftime("%d %b %Y • %H:%M")
+        post["categories"] = post.get("categories") or []
+
+        formatted.append(post)
+
+    return formatted

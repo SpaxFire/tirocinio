@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, Request, Header, APIRouter
+from fastapi import Depends, HTTPException, Request, Header, APIRouter
 from fastapi.responses import HTMLResponse
 from app.core.config import templates
 from app.core.dependencies import optional_current_user_cookie
@@ -135,6 +135,68 @@ async def search_page(
 
     # NON HX → render normale (già pulito se hai fatto redirect prima)
     return templates.TemplateResponse("search/search.html", context)
+
+@router.get("/discover", response_class=HTMLResponse)
+async def discover_page(
+    request: Request,
+    tab: str = "posts",
+    page: int = 0,
+    page_size: int = 10,
+    current_user: UserInDB | None = Depends(optional_current_user_cookie),
+):
+
+    skip = page * page_size
+
+    if tab == "posts":
+        results = post_crud.discover_posts_from_followed_likes(
+            my_id=current_user.id,
+            skip=skip,
+            limit=page_size,
+        )
+    else:
+        results = user_crud.discover_users_from_followed(
+            my_id=current_user.id,
+            skip=skip,
+            limit=page_size,
+        )
+
+    has_more = len(results) == page_size
+    pagination_url = f"/discover?tab={tab}"
+
+    context = {
+        "request": request,
+        "active_tab": tab,
+        "next_page": page + 1,
+        "has_more": has_more,
+        "pagination_url": pagination_url,
+    }
+
+    if tab == "posts":
+        context["posts"] = results
+    else:
+        context["users"] = results
+
+    # HTMX
+    if request.headers.get("HX-Request"):
+        print("Richiesta HTMX per Discover - Tab:", tab, "Pagina:", page)
+        if page > 0:
+            template_map = {
+                "posts": "partials/feed.html",
+                "users": "partials/user_list.html",
+            }
+            return templates.TemplateResponse(template_map[tab], context)
+
+        response = templates.TemplateResponse(
+            "discover/partials/discover_content.html",
+            context
+        )
+        response.headers["HX-Push-Url"] = pagination_url
+        return response
+
+    return templates.TemplateResponse(
+        "discover/discover.html",
+        context
+    )
 
 @router.get("/empty", response_class=HTMLResponse)
 async def empty():

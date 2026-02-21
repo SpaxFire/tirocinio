@@ -102,8 +102,8 @@ async def edit_post_modal(
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
-    # controllo che l'utente sia l'autore del post
-    if not user or user.username != post["author"]:
+    # controllo che l'utente sia l'autore del post o un admin
+    if not user or (user.username != post["author"] and user.role != "ADMIN"):
         raise HTTPException(status_code=403, detail="Permesso negato")
 
     return templates.TemplateResponse(
@@ -128,10 +128,11 @@ async def update_post(
 ):
     post = post_crud.get_post_by_id(post_id, user.id if user else None)
     if not post:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Post non trovato")
 
-    if not user or user.username != post["author"]:
-        raise HTTPException(status_code=403)
+    # controllo che l'utente sia l'autore del post o un admin
+    if not user or (user.username != post["author"] and user.role != "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permesso negato")
     
     if not content.strip():
             # l'eliminazione del messaggio di errore è gestita usando l'endpoint di empty
@@ -225,7 +226,8 @@ async def delete_post_modal(
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
-    if not user or user.username != post["author"]:
+    # controllo che l'utente sia l'autore del post o un admin
+    if not user or (user.username != post["author"] and user.role != "ADMIN"):
         raise HTTPException(status_code=403, detail="Permesso negato")
 
     return templates.TemplateResponse(
@@ -247,10 +249,11 @@ async def delete_post(
 ):
     post = post_crud.get_post_by_id(post_id, user.id if user else None)
     if not post:
-        raise HTTPException(status_code=404)
+        raise HTTPException(status_code=404, detail="Post non trovato")
 
-    if not user or user.username != post["author"]:
-        raise HTTPException(status_code=403)
+    # controllo che l'utente sia l'autore del post o un admin
+    if not user or (user.username != post["author"] and user.role != "ADMIN"):
+        raise HTTPException(status_code=403, detail="Permesso negato")
 
     post_crud.delete_post(post_id)
 

@@ -21,27 +21,52 @@
                 </p>
             </div>
 
-            <!-- Follow button -->
-            {% if current_user(request).username == user.username %}
-            <div class="mt-4">
+            {% set is_owner = current_user(request).username == user.username %}
+            {% set is_admin = current_user(request).role == "ADMIN" %}
+
+            <div class="mt-4 flex flex-col items-center space-y-2">
+
+                {# Caso: proprietario del profilo #}
+                {% if is_owner %}
                 <button hx-get="/u/{{ user.username }}/edit-modal" hx-target="#modal-container" hx-swap="innerHTML"
                     class="px-5 py-2 rounded-full transition btn-secondary">
                     Impostazioni
                 </button>
-            </div>
-            {% else %}
-            <div id="follow-btn-{{ user.username }}" class="mt-4">
-                {% with
-                username=user.username,
-                following=user.following_by_me,
-                follower_count=user.follower_count
-                %}
-                {% include "users/partials/follow_button.html" %}
-                {% endwith %}
-            </div>
-            {% endif %}
 
+                {% else %}
 
+                {# USER normale → solo follow #}
+                {% if not is_admin %}
+                <div id="follow-btn-{{ user.username }}">
+                    {% with
+                    username=user.username,
+                    following=user.following_by_me,
+                    follower_count=user.follower_count
+                    %}
+                    {% include "users/partials/follow_button.html" %}
+                    {% endwith %}
+                </div>
+
+                {# ADMIN → follow + impostazioni sotto #}
+                {% else %}
+                <div id="follow-btn-{{ user.username }}">
+                    {% with
+                    username=user.username,
+                    following=user.following_by_me,
+                    follower_count=user.follower_count
+                    %}
+                    {% include "users/partials/follow_button.html" %}
+                    {% endwith %}
+                </div>
+
+                <button hx-get="/u/{{ user.username }}/edit-modal" hx-target="#modal-container" hx-swap="innerHTML"
+                    class="px-5 py-2 rounded-full transition btn-secondary">
+                    Impostazioni
+                </button>
+                {% endif %}
+
+                {% endif %}
+            </div>
         </div>
 
         <!-- Tabs -->

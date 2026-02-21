@@ -1,0 +1,41 @@
+<div class="max-w-3xl mx-auto" id="discover-wrapper">
+
+    <!-- Header -->
+    <div class="bg-white rounded-xl mb-6 p-4">
+        <h1 class="text-2xl font-bold">Discover</h1>
+        <p class="text-gray-500 text-sm">
+            Scopri contenuti e persone tramite la tua rete.
+        </p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-6 border-b mb-6">
+        <nav class="grid grid-cols-2 text-gray-400 font-medium w-full">
+
+            <!-- POST -->
+            <button hx-get="/discover?tab=posts" hx-target="#discover-wrapper" hx-push-url="true"
+                class="py-3 nav-item cursor-pointer {{ 'active' if active_tab == 'posts' else '' }}">
+                Post
+            </button>
+
+            <!-- USERS -->
+            <button hx-get="/discover?tab=users" hx-target="#discover-wrapper" hx-push-url="true"
+                class="py-3 nav-item cursor-pointer {{ 'active' if active_tab == 'users' else '' }}">
+                Utenti
+            </button>
+
+        </nav>
+    </div>
+
+    <!-- Results -->
+    <div id="discover-results" class="space-y-4">
+
+        {% if active_tab == "posts" %}
+        {% include "partials/feed.html" %}
+        {% elif active_tab == "users" %}
+        {% include "partials/user_list.html" %}
+        {% endif %}
+
+    </div>
+
+</div>
