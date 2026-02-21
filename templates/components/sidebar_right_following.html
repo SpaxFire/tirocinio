@@ -1,0 +1,37 @@
+<div class="bg-white rounded-xl shadow p-4 space-y-4">
+
+    <div class="flex items-center justify-between">
+        <h2 class="font-semibold text-gray-800 text-sm">
+            Stai seguendo
+        </h2>
+
+        {% if users %}
+        <a href="/u/{{ current_user(request).username }}/following" hx-boost="false"
+            class="text-xs btn-primary px-2 py-1 rounded-full">
+            Vedi tutti
+        </a>
+        {% endif %}
+    </div>
+
+    {% if users %}
+
+    <div class="space-y-3">
+        {% for user_item in users %}
+        {% include "/components/partials/user_row_compact.html" %}
+        {% endfor %}
+    </div>
+
+    {% else %}
+
+    <p class="text-sm text-gray-500">
+        Non segui ancora nessuno.
+    </p>
+
+    <a hx-get="/search?tab=users" hx-target="#main-content" hx-push-url="true"
+        class="text-sm btn-primary px-3 py-2 rounded-full">
+        Cerca nuovi utenti
+    </a>
+
+    {% endif %}
+
+</div>

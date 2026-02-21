@@ -89,48 +89,131 @@
     </div>
 
     <!-- ========================= -->
+    <!-- SEZIONE RUOLO -->
+    <!-- ========================= -->
+    <div>
+        <h3 class="font-semibold mb-3">Ruolo</h3>
+
+        {% if is_admin %}
+
+        <!-- ADMIN può modificare -->
+        <form hx-post="/u/{{ user.username }}/update" hx-swap="none" class="flex flex-col gap-3">
+
+            <input type="hidden" name="section" value="role">
+
+            <select name="role" class="border rounded p-2">
+
+                <option value="USER" {% if user.role=="USER" %}selected{% endif %}>
+                    Utente
+                </option>
+
+                <option value="ADMIN" {% if user.role=="ADMIN" %}selected{% endif %}>
+                    Amministratore
+                </option>
+
+            </select>
+
+            {% if not is_owner %}
+            <p class="text-sm text-yellow-500">
+                Stai modificando il ruolo di questo utente.
+            </p>
+            {% endif %}
+
+            <div class="flex justify-end">
+                <button class="btn-primary px-4 py-2">
+                    Aggiorna ruolo
+                </button>
+            </div>
+
+        </form>
+
+        {% else %}
+
+        <!-- Utente normale vede solo il ruolo -->
+        <div class="flex flex-col gap-2">
+            <input type="text" value="{{ 'Utente' if user.role=='USER' else 'Amministratore' }}" disabled
+                class="border rounded p-2 bg-gray-100 text-gray-500 cursor-not-allowed">
+        </div>
+
+        {% endif %}
+    </div>
+
+    <!-- ========================= -->
     <!-- DANGER ZONE -->
     <!-- ========================= -->
+    {% if is_admin and not user.is_active %}
+
+    <!-- ========================= -->
+    <!-- ADMIN - RIATTIVAZIONE -->
+    <!-- ========================= -->
     <div class="border-t pt-6 mt-6">
-        <h3 class="text-red-600 font-semibold mb-3">Zona pericolosa</h3>
+        <h3 class="text-green-600 font-semibold mb-3">
+            Account disattivato
+        </h3>
+
+        <p class="text-sm text-gray-500 mb-4">
+            Questo account è attualmente disattivato.
+        </p>
+
+        <button hx-post="/u/{{ user.username }}/reactivate" hx-swap="none" class="btn-success px-4 py-2">
+            Riattiva account
+        </button>
+    </div>
+
+    {% elif is_owner or is_admin %}
+
+    <!-- ========================= -->
+    <!-- DANGER ZONE NORMALE -->
+    <!-- ========================= -->
+    <div class="border-t pt-6 mt-6">
+        <h3 class="text-red-600 font-semibold mb-3">
+            Zona pericolosa
+        </h3>
 
         <button hx-get="/u/{{ user.username }}/delete-modal" hx-target="#modal-container" hx-swap="innerHTML"
             class="btn-danger px-4 py-2">
             Elimina account
         </button>
     </div>
-
+    {% endif %}
 </div>
 {% endset %}
 <script>
-    document.addEventListener("input", function (e) {
+    document.body.addEventListener("htmx:load", function (evt) {
 
-        const newPassword = document.getElementById("new-password");
-        const confirmPassword = document.getElementById("confirm-password");
-        const message = document.getElementById("password-match-message");
-        const submitBtn = document.getElementById("password-submit");
+        const container = evt.target;
+
+        const newPassword = container.querySelector("#new-password");
+        const confirmPassword = container.querySelector("#confirm-password");
+        const message = container.querySelector("#password-match-message");
+        const submitBtn = container.querySelector("#password-submit");
 
         if (!newPassword || !confirmPassword) return;
 
-        const pwd = newPassword.value;
-        const confirm = confirmPassword.value;
+        function validate() {
+            const pwd = newPassword.value;
+            const confirm = confirmPassword.value;
 
-        if (!pwd && !confirm) {
-            message.textContent = "";
-            message.className = "";
-            submitBtn.disabled = true;
-            return;
+            if (!pwd && !confirm) {
+                message.textContent = "";
+                message.className = "";
+                submitBtn.disabled = true;
+                return;
+            }
+
+            if (pwd === confirm) {
+                message.textContent = "Le password coincidono ✓";
+                message.className = "msg-success";
+                submitBtn.disabled = false;
+            } else {
+                message.textContent = "Le password non coincidono";
+                message.className = "msg-danger";
+                submitBtn.disabled = true;
+            }
         }
 
-        if (pwd === confirm) {
-            message.textContent = "Le password coincidono ✓";
-            message.className = "msg-success";
-            submitBtn.disabled = false;
-        } else {
-            message.textContent = "Le password non coincidono";
-            message.className = "msg-danger";
-            submitBtn.disabled = true;
-        }
+        newPassword.addEventListener("input", validate);
+        confirmPassword.addEventListener("input", validate);
     });
 </script>
 

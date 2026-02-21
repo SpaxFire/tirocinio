@@ -34,15 +34,13 @@
         <!-- RIGHT: follow button -->
         {% set current = current_user(request) %}
         {% if current.username != user_item.username %}
-        <div id="follow-btn-{{ user_item.username }}">
-            {% with
-            username=user_item.username,
-            following=user_item.following_by_me,
-            follower_count=user_item.follower_count
-            %}
-            {% include "users/partials/follow_button.html" %}
-            {% endwith %}
-        </div>
+        {% with
+        username=user_item.username,
+        following=user_item.following_by_me,
+        follower_count=user_item.follower_count
+        %}
+        {% include "users/partials/follow_button.html" %}
+        {% endwith %}
         {% endif %}
 
     </div>

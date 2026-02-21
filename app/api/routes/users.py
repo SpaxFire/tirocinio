@@ -1,5 +1,5 @@
 from typing import Annotated, Union
-from fastapi import APIRouter, HTTPException, Request, Form, Header, Depends
+from fastapi import APIRouter, HTTPException, Request, Form, Header, Depends, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi import UploadFile, File
@@ -57,13 +57,39 @@ async def toggle_follow_user(
         username
     )
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         "users/partials/follow_button.html",
         {
             "request": request,
             "username": username,
             "following": following,
             "follower_count": follower_count,
+        },
+    )
+
+    # evento globale per aggiornare contatori e stato follow nei vari componenti della pagina
+    response.headers["HX-Trigger"] = f"follow-updated-{username}"
+
+    return response
+
+@router.get("/{username}/follow-state")
+async def follow_state(
+    request: Request,
+    username: str,
+    user: UserInDB = Depends(require_user_cookie),
+):
+    profile = user_crud.get_user_profile_by_username(
+        username,
+        user.id
+    )
+
+    return templates.TemplateResponse(
+        "users/partials/follow_button.html",
+        {
+            "request": request,
+            "username": username,
+            "following": profile.following_by_me,
+            "follower_count": profile.follower_count,
         },
     )
 
@@ -273,6 +299,9 @@ async def update_user(
     new_password: str | None = Form(None),
     new_password_confirm: str | None = Form(None),
 
+    # role
+    role: str | None = Form(None),
+
     current_user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
     if not current_user or (current_user.role != "ADMIN" and current_user.username != username):
@@ -348,6 +377,24 @@ async def update_user(
                     msg_success = "Password aggiornata"
                 else:
                     msg_error = "Errore durante l'aggiornamento"
+    
+    # ======================
+    # SEZIONE ROLE
+    # ======================
+    elif section == "role":
+
+        if current_user.role != "ADMIN":
+            msg_error = "Accesso negato"
+
+        elif role not in ["USER", "ADMIN"]:
+            msg_error = "Ruolo non valido"
+        else:
+            result = user_crud.update_role(target_user.id, role)
+
+            if result:
+                msg_success = "Ruolo aggiornato"
+            else:
+                msg_error = "Errore durante aggiornamento ruolo"
 
     # recupero utente aggiornato
     updated_user = user_crud.get_user_profile_by_username(
@@ -397,16 +444,18 @@ async def update_user(
 async def delete_confirm_modal(
     username: str,
     request: Request,
-    user: UserInDB = Depends(require_user_cookie)
+    current_user: UserInDB = Depends(require_user_cookie)
 ):
-    if not user or user.username != username:
+    if not current_user or (current_user.role != "ADMIN" and current_user.username != username):
         raise HTTPException(status_code=403)
+    
+    target_user = user_crud.get_user_by_username(username)
 
     return templates.TemplateResponse(
         "users/delete_modal.html",
         {
             "request": request,
-            "user": user
+            "user": target_user
         }
     )
 
@@ -414,12 +463,15 @@ async def delete_confirm_modal(
 async def delete_user(
     username: str,
     password: str = Form(None),
-    user: UserInDB = Depends(require_user_cookie)
+    current_user: UserInDB = Depends(require_user_cookie)
 ):
-    if not user or user.username != username:
+    is_admin = current_user.role == "ADMIN"
+    if not current_user or (not is_admin and current_user.username != username):
         raise HTTPException(status_code=403)
     
-    if not password:
+    target_user = user_crud.get_user_by_username(username)
+    
+    if not is_admin and not password:
         return HTMLResponse("""
             <div id="flash-container" hx-swap-oob="innerHTML">
                 <div class="msg-danger"
@@ -430,7 +482,7 @@ async def delete_user(
         """)
 
     # verifica password
-    if not verify_password(password, user.password_hash):
+    if not is_admin and not verify_password(password, target_user.password_hash):
         return HTMLResponse("""
             <div id="flash-container" hx-swap-oob="innerHTML">
                 <div class="msg-danger"
@@ -441,25 +493,53 @@ async def delete_user(
         """)
 
     # soft delete
-    user_crud.deactivate_user(user.id)
+    user_crud.deactivate_user(target_user.id)
 
-    # reset completo UI come logout
-    response = HTMLResponse("""
-        <div id="modal-container" hx-swap-oob="true"></div>
-        <div id="flash-container" hx-swap-oob="innerHTML">
-            <div class="msg-success"
-                hx-get="/empty"
-                hx-trigger="load delay:3s"
-                hx-swap="delete">
-                Account eliminato
-            </div>
-        </div>
-        <div id="user-widget" hx-get="/auth/user-widget" hx-trigger="load" hx-swap-oob="true"></div>
-    """)
+    response = Response(status_code=204)
+    response.headers["HX-Redirect"] = f"/u/{username}"
 
-    response.delete_cookie("access_token")
+    if current_user.username == username:
+        response.delete_cookie("access_token")
+
+    # flash temporaneo
+    # (dato che stiamo per fare redirect, non possiamo usare swap o simili, quindi usiamo un cookie temporaneo)
+    response.set_cookie(
+        key="flash_message",
+        value="Account disattivato. Contatta un admin per riattivarlo.",
+        max_age=5,
+        httponly=False,
+    )
 
     return response
+
+@router.post("/{username}/reactivate")
+async def reactivate_user(
+    username: str,
+    request: Request,
+    current_user: UserInDB | None = Depends(optional_current_user_cookie)
+):
+    if not current_user or current_user.role != "ADMIN":
+        raise HTTPException(status_code=403, detail="Accesso negato")
+
+    target_user = user_crud.get_user_by_username(username)
+
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utente non trovato")
+
+    user_crud.reactivate_user(target_user.id)
+
+    return HTMLResponse("""
+    <div id="flash-container" hx-swap-oob="innerHTML">
+        <div class="msg-success"
+             hx-get="/empty"
+             hx-trigger="load delay:3s"
+             hx-swap="delete">
+            Account riattivato con successo
+        </div>
+    </div>
+
+    <div id="modal-container" hx-swap-oob="true"></div>
+    """)
 
 
 @router.post("/{username}/validate-password")

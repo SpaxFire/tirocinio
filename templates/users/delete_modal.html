@@ -1,18 +1,25 @@
 {% set content %}
+{% set current_user = current_user(request) %}
+{% set is_admin = current_user.role == "ADMIN" %}
 <h2 class="text-lg font-semibold mb-4">
     Conferma eliminazione account
 </h2>
 
 <p class="mb-4">
     Questa azione non è reversibile.
+    {% if is_admin %}
+    <br>Sei un amministratore, puoi eliminare qualsiasi account.
+    {% else %}
     <br>Inserisci la password per continuare.
+    {% endif %}
 </p>
 
-<form hx-post="/u/{{ user.username }}/delete" hx-target="#modal-container" hx-swap="innerHTML"
-    class="flex flex-col gap-4">
+<form hx-post="/u/{{ user.username }}/delete" hx-target="#modal-container" hx-swap="none" class="flex flex-col gap-4">
 
     <!-- Password full width -->
-    <input type="password" name="password" placeholder="Password" class="w-full border rounded p-2" required>
+    {% if not is_admin %}
+    <input type="password" name="password" placeholder="Password" class="w-full border rounded p-2">
+    {% endif %}
 
     <!-- Footer bottoni -->
     <div class="flex justify-between items-center mt-2">

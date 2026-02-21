@@ -523,7 +523,6 @@ def update_email(user_id: str, email: str):
         return True
 
 def update_password(user_id: str, password_hash: str):
-
     with driver.session() as session:
         session.run("""
             MATCH (u:User {id: $user_id})
@@ -534,11 +533,34 @@ def update_password(user_id: str, password_hash: str):
 
     return True
 
+def update_role(user_id: str, role: str) -> bool:
+    with driver.session() as session:
+        session.run("""
+            MATCH (u:User {id: $user_id})
+            SET u.role = $role
+            RETURN u
+        """,
+        user_id=user_id,
+        role=role)
+
+    return True
+
 def deactivate_user(user_id: str):
     with driver.session() as session:
         session.run("""
             MATCH (u:User {id: $user_id})
+            WHERE u.is_active = true
             SET u.is_active = false
+            RETURN u
+        """, user_id=user_id)
+
+def reactivate_user(user_id: str):
+    with driver.session() as session:
+        session.run("""
+        MATCH (u:User {id: $user_id})
+        WHERE u.is_active = false
+        SET u.is_active = true
+        RETURN u
         """, user_id=user_id)
 
 def search_users(query: str, bio: str, skip: int, limit: int, my_id: str | None):

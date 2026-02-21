@@ -33,6 +33,33 @@ async def index(
         {"request": request}
     )
 
+@router.get("/sidebar/right", response_class=HTMLResponse)
+def right_sidebar(
+    request: Request,
+    current_user: UserInDB | None = Depends(optional_current_user_cookie),
+):
+    if not current_user:
+        return templates.TemplateResponse(
+            "components/sidebar_right_guest.html",
+            {"request": request}
+        )
+
+    users = user_crud.get_following_paginated(
+        username=current_user.username,
+        skip=0,
+        limit=5,
+        my_id=current_user.id
+    )
+
+    return templates.TemplateResponse(
+        "components/sidebar_right_following.html",
+        {
+            "request": request,
+            "users": users,
+            "has_more": False
+        }
+    )
+
 @router.get("/search", response_class=HTMLResponse)
 async def search_page(
     request: Request,

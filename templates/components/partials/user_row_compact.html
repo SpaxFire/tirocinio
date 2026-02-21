@@ -1,0 +1,31 @@
+<div id="user-{{ user_item.username }}" hx-get="/u/{{ user_item.username }}" hx-target="#main-content"
+    hx-push-url="true" hx-trigger="click consume"
+    class="cursor-pointer bg-white rounded-xl p-4 gap-3 flex items-center justify-between hover:bg-gray-50 transition">
+
+    <!-- LEFT -->
+    <div hx-get="/u/{{ user_item.username }}" hx-target="#main-content" hx-push-url="true"
+        class="flex items-center gap-3 cursor-pointer group">
+
+        <img src="{{ user_item.profile_image or url_for('static', path='images/default_avatar.png') }}"
+            class="w-10 h-10 rounded-full object-cover">
+
+        <div class="min-w-0">
+            <p class="text-sm font-semibold text-gray-800 truncate">
+                {{ user_item.username }}
+            </p>
+        </div>
+    </div>
+
+    <!-- FOLLOW BUTTON -->
+    {% set current = current_user(request) %}
+    {% if current and current.username != user_item.username %}
+    {% with
+    username=user_item.username,
+    following=user_item.following_by_me,
+    follower_count=user_item.follower_count
+    %}
+    {% include "users/partials/follow_button.html" %}
+    {% endwith %}
+    {% endif %}
+
+</div>

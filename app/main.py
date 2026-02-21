@@ -21,6 +21,22 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
         return response
+    
+class CurrentUserMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+
+        access_token = request.cookies.get("access_token")
+        user = await optional_current_user_cookie(access_token)
+
+        request.state.user = user
+
+        response = await call_next(request)
+
+        # elimina flash cookie dopo il primo render
+        if request.cookies.get("flash_message"):
+            response.delete_cookie("flash_message")
+
+        return response
 
 
 app.add_middleware(CurrentUserMiddleware)

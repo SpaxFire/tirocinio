@@ -19,7 +19,15 @@
 <body hx-boost="true" class="bg-gray-100">
 
     <div class="max-w-7xl mx-auto flex gap-6 mt-6">
-        <div id="flash-container" class="fixed top-5 right-5 z-[9999] space-y-2"></div>
+        <div id="flash-container" class="fixed top-5 right-5 z-[9999] space-y-2">
+            {% set flash = request.cookies.get("flash_message") %}
+            {% if flash %}
+            <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 4000)" x-show="show" x-transition
+                class="msg-success">
+                {{ flash }}
+            </div>
+            {% endif %}
+        </div>
 
         <!-- SIDEBAR -->
         <aside id="sidebar-left" class="w-1/4 sticky top-6 h-fit">
@@ -32,8 +40,14 @@
         </main>
 
         <!-- RIGHT -->
-        <aside id="sidebar-right" class="w-1/4">
-            {% include "components/sidebar_right.html" %}
+        <aside id="sidebar-right" class="w-1/4 sticky top-6 h-fit">
+            <div hx-get="/sidebar/right" hx-trigger="load" hx-swap="innerHTML">
+
+                <div class="bg-white rounded-xl shadow p-4 text-sm text-gray-400">
+                    Caricamento...
+                </div>
+
+            </div>
         </aside>
     </div>
 

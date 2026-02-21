@@ -79,11 +79,11 @@
     }
 
     .msg-success {
-        @apply text-green-600 bg-green-50 p-3 mb-3 rounded-full;
+        @apply text-green-600 bg-green-50 p-3 mb-3 rounded-full border border-green-200;
     }
 
     .msg-danger {
-        @apply text-red-600 bg-red-50 p-3 mb-3 rounded-full;
+        @apply text-red-600 bg-red-50 p-3 mb-3 rounded-full border border-red-200;
     }
 
     .img-hover {

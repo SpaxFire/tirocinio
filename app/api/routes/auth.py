@@ -248,11 +248,8 @@ async def register_user(
 
 @router.post("/logout")
 async def logout():
-    response = HTMLResponse("""
-        <script>
-            window.location='/';
-        </script>
-    """)
+    response = Response(status_code=204)
+    response.headers["HX-Refresh"] = "true"
     response.delete_cookie("access_token")
     return response
 
