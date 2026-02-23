@@ -328,17 +328,33 @@ def get_user_with_counts(username: str, my_id: str | None):
     query = """
     MATCH (u:User {username: $username})
 
+    /* ---------------- POST COUNT ---------------- */
+    OPTIONAL MATCH (u)-[:CREATED]->(p:Post)
+    WITH u, count(DISTINCT p) AS post_count
+
+    /* ---------------- TOTAL LIKES RECEIVED ---------------- */
+    OPTIONAL MATCH (u)-[:CREATED]->(p2:Post)<-[:LIKES]-(liker:User)
+    WITH u, post_count, count(liker) AS total_likes_received
+
+    /* ---------------- FOLLOWER COUNT ---------------- */
     OPTIONAL MATCH (u)<-[:FOLLOWS]-(f:User)
-    WITH u, count(DISTINCT f) AS follower_count
+    WITH u, post_count, total_likes_received,
+        count(DISTINCT f) AS follower_count
 
+    /* ---------------- FOLLOWING COUNT ---------------- */
     OPTIONAL MATCH (u)-[:FOLLOWS]->(f2:User)
-    WITH u, follower_count, count(DISTINCT f2) AS following_count
+    WITH u, post_count, total_likes_received,
+        follower_count,
+        count(DISTINCT f2) AS following_count
 
+    /* ---------------- FOLLOWING BY ME ---------------- */
     OPTIONAL MATCH (me:User {id: $my_id})
     OPTIONAL MATCH (me)-[rel:FOLLOWS]->(u)
 
     RETURN
         u,
+        post_count,
+        total_likes_received,
         follower_count,
         following_count,
         CASE WHEN rel IS NULL THEN false ELSE true END AS following_by_me
@@ -359,6 +375,8 @@ def get_user_with_counts(username: str, my_id: str | None):
 
     return {
         **dict(u),
+        "post_count": record["post_count"],
+        "total_likes_received": record["total_likes_received"],
         "follower_count": record["follower_count"],
         "following_count": record["following_count"],
         "following_by_me": record["following_by_me"],

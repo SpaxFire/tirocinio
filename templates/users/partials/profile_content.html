@@ -19,6 +19,28 @@
                 <p class="mt-1">
                     {{ user.bio }}
                 </p>
+
+                <div class="mt-4 flex gap-6 text-sm font-medium">
+                    <div>
+                        <span class="text-black font-semibold">{{ user.post_count }}</span>
+                        <span class="text-gray-500"> Post</span>
+                    </div>
+
+                    <div>
+                        <span class="text-black font-semibold">{{ user.total_likes_received }}</span>
+                        <span class="text-gray-500"> Like</span>
+                    </div>
+
+                    <div>
+                        <span class="text-black font-semibold">{{ user.follower_count }}</span>
+                        <span class="text-gray-500"> Follower</span>
+                    </div>
+
+                    <div>
+                        <span class="text-black font-semibold">{{ user.following_count }}</span>
+                        <span class="text-gray-500"> Seguiti</span>
+                    </div>
+                </div>
             </div>
 
             {% set is_owner = current_user(request).username == user.username %}
@@ -79,28 +101,38 @@
         }
      ">
 
-                <button hx-get="/u/{{ user.username }}/posts" hx-target="#profile-content"
-                    class="py-3 nav-item active cursor-pointer">
+                <button hx-get=" /u/{{ user.username }}/posts" hx-target="#profile-content"
+                    class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/posts' or request.url.path=='/u/' ~ user.username %} active {% endif%}"
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/posts' or request.url.path=='/u/'
+                    ~ user.username %} hx-trigger="load, click" {% endif %}>
                     Post
                 </button>
 
                 <button hx-get="/u/{{ user.username }}/comments" hx-target="#profile-content"
-                    class="py-3 nav-item cursor-pointer">
+                    class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/comments' %} active {% endif%}"
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/comments' %} hx-trigger="click"
+                    {% endif %}>
                     Commenti
                 </button>
 
                 <button hx-get="/u/{{ user.username }}/likes" hx-target="#profile-content"
-                    class="py-3 nav-item cursor-pointer">
+                    class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/likes' %} active {% endif%}"
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/likes' %} hx-trigger="click" {%
+                    endif %}>
                     Mi piace
                 </button>
 
                 <button hx-get="/u/{{ user.username }}/followers" hx-target="#profile-content"
-                    class="py-3 nav-item cursor-pointer">
+                    class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/followers' %} active {% endif%}"
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/followers' %}
+                    hx-trigger="load, click" {% endif %}>
                     Follower
                 </button>
 
                 <button hx-get="/u/{{ user.username }}/following" hx-target="#profile-content"
-                    class="py-3 nav-item cursor-pointer">
+                    class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/following' %} active {% endif %}"
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/following' %}
+                    hx-trigger="load, click" {% endif %}>
                     Seguiti
                 </button>
             </nav>
@@ -109,6 +141,6 @@
         </div>
 
         <!-- Content -->
-        <div id="profile-content" class="py-6" hx-get="/u/{{ user.username }}/posts" hx-trigger="load"></div>
+        <div id="profile-content" class="py-6"></div>
     </div>
 </div>

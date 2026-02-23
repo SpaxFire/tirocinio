@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.core.config import templates
-from app.core.dependencies import optional_current_user_cookie
+from app.core.security import optional_current_user_cookie
 from app.api.router import api_router
 
 app = FastAPI()

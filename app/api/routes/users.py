@@ -1,11 +1,9 @@
-from typing import Annotated, Union
-from fastapi import APIRouter, HTTPException, Request, Form, Header, Depends, Response
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter, HTTPException, Request, Form, Depends, Response
+from fastapi.responses import HTMLResponse
 from fastapi import UploadFile, File
 from app.services.media import save_post_media
 
-from app.api.routes.auth import require_user_cookie, optional_current_user_cookie
+from app.core.security import require_user_cookie, optional_current_user_cookie
 from app.db import user as user_crud
 from app.core.config import templates
 from app.core.security import verify_password, hash_password
@@ -18,7 +16,6 @@ router = APIRouter(prefix="/u", tags=["users"])
 def user_profile_page(username: str, request: Request, current_user: UserInDB | None = Depends(optional_current_user_cookie)):
 
     user = user_crud.get_user_profile_by_username(username, current_user.id if current_user else None)
-    print(user)
 
     if not user:
         return HTMLResponse("""
@@ -99,20 +96,44 @@ async def user_posts(
     username: str,
     page: int = 0,
     page_size: int = 10,
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    current_user: UserInDB | None = Depends(optional_current_user_cookie),
 ):
     skip = page * page_size
-    posts = await user_crud.get_user_posts_paginated(username, skip, page_size, user.id if user else None)
+
+    profile_user = user_crud.get_user_with_counts(
+        username=username,
+        my_id=current_user.id if current_user else None
+    )
+
+    if not profile_user:
+        raise HTTPException(status_code=404)
+
+    posts = await user_crud.get_user_posts_paginated(
+        username,
+        skip,
+        page_size,
+        current_user.id if current_user else None
+    )
+
+    context = {
+        "request": request,
+        "user": profile_user,
+        "posts": posts,
+        "next_page": page + 1,
+        "has_more": len(posts) == page_size,
+        "active_tab": "posts",
+        "pagination_url": f"/u/{username}/posts",
+    }
+
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(
+            "partials/feed.html",
+            context
+        )
 
     return templates.TemplateResponse(
-        "partials/feed.html",
-        {
-            "request": request,
-            "posts": posts,
-            "next_page": page + 1,
-            "has_more": len(posts) == page_size,
-            "pagination_url": f"/u/{username}/posts"
-        }
+        "users/profile.html",
+        context
     )
 
 @router.get("/{username}/comments", response_class=HTMLResponse)
@@ -121,26 +142,44 @@ async def user_comments(
     username: str,
     page: int = 0,
     page_size: int = 10,
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    current_user: UserInDB | None = Depends(optional_current_user_cookie),
 ):
     skip = page * page_size
+
+    profile_user = user_crud.get_user_with_counts(
+        username=username,
+        my_id=current_user.id if current_user else None
+    )
+
+    if not profile_user:
+        raise HTTPException(status_code=404)
 
     comments = await user_crud.get_user_comments_paginated(
         username,
         skip,
         page_size,
-        user.id if user else None
+        current_user.id if current_user else None
     )
 
+    context = {
+        "request": request,
+        "user": profile_user,
+        "comments": comments,
+        "next_page": page + 1,
+        "has_more": len(comments) == page_size,
+        "active_tab": "comments",
+        "pagination_url": f"/u/{username}/comments",
+    }
+
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(
+            "users/partials/profile_comments.html",
+            context
+        )
+
     return templates.TemplateResponse(
-        "users/partials/profile_comments.html",
-        {
-            "request": request,
-            "comments": comments,
-            "next_page": page + 1,
-            "has_more": len(comments) == page_size,
-            "pagination_url": f"/u/{username}/comments"
-        }
+        "users/profile.html",
+        context
     )
 
 @router.get("/{username}/likes", response_class=HTMLResponse)
@@ -149,20 +188,44 @@ async def user_likes(
     username: str,
     page: int = 0,
     page_size: int = 10,
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    current_user: UserInDB | None = Depends(optional_current_user_cookie),
 ):
     skip = page * page_size
-    likes_posts = await user_crud.get_user_likes_paginated(username, skip, page_size, user.id if user else None)
+
+    profile_user = user_crud.get_user_with_counts(
+        username=username,
+        my_id=current_user.id if current_user else None
+    )
+
+    if not profile_user:
+        raise HTTPException(status_code=404)
+
+    likes_posts = await user_crud.get_user_likes_paginated(
+        username,
+        skip,
+        page_size,
+        current_user.id if current_user else None
+    )
+
+    context = {
+        "request": request,
+        "user": profile_user,
+        "posts": likes_posts,
+        "next_page": page + 1,
+        "has_more": len(likes_posts) == page_size,
+        "active_tab": "likes",
+        "pagination_url": f"/u/{username}/likes",
+    }
+
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(
+            "partials/feed.html",
+            context
+        )
 
     return templates.TemplateResponse(
-        "partials/feed.html",
-        {
-            "request": request,
-            "posts": likes_posts,
-            "next_page": page + 1,
-            "has_more": len(likes_posts) == page_size,
-            "pagination_url": f"/u/{username}/likes"
-        }
+        "users/profile.html",
+        context
     )
 
 @router.get("/{username}/followers", response_class=HTMLResponse)

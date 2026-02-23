@@ -1,10 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request, Form, Depends
 from fastapi.responses import HTMLResponse
 
-from app.api.routes.auth import require_user_cookie
-from app.core.dependencies import optional_current_user_cookie
-from app.db import post as post_crud
-from app.db import comment as comment_crud
+from app.core.security import require_user_cookie, optional_current_user_cookie
+from app.db import post as post_db
+from app.db import comment as comment_db
 from app.core.config import templates
 from app.schemas.user import UserInDB
 
@@ -18,12 +17,12 @@ async def get_comments(
 ):
     limit = 3 if source == "feed" else None
 
-    comments = await comment_crud.get_comments_of_post(
+    comments = await comment_db.get_comments_of_post(
         post_id,
         limit=limit
     )
 
-    total_count = await comment_crud.count_comments_of_post(post_id)
+    total_count = await comment_db.count_comments_of_post(post_id)
 
     show_all_button = source == "feed" and total_count > 5
 
@@ -48,7 +47,7 @@ async def comment_modal(
     source: str = "feed",
     user: UserInDB = Depends(require_user_cookie),
 ):
-    post = post_crud.get_post_by_id(post_id, user.id)
+    post = post_db.get_post_by_id(post_id, user.id)
 
     if not post:
         raise HTTPException(status_code=404)
@@ -83,13 +82,13 @@ async def create_comment(
         </div>
         """)
 
-    comment_crud.create_comment(
+    comment_db.create_comment(
         post_id=post_id,
         username=user.username,
         content=content
     )
     # recupero dati aggiornati del post per renderizzare correttamente i commenti
-    comments = await comment_crud.get_comments_of_post(post_id)
+    comments = await comment_db.get_comments_of_post(post_id)
     comments_html = templates.get_template(
         "posts/comments.html"
     ).render({
@@ -97,7 +96,7 @@ async def create_comment(
         "comments": comments
     })
 
-    commented_by_me = await comment_crud.has_user_commented(post_id=post_id, username=user.username)
+    commented_by_me = await comment_db.has_user_commented(post_id=post_id, username=user.username)
     button_html = templates.get_template(
         "posts/partials/comment_button.html"
     ).render({
@@ -163,7 +162,7 @@ async def edit_comment_modal(
     source: str = "feed",
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    comment = comment_crud.get_comment_by_id(comment_id)
+    comment = comment_db.get_comment_by_id(comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Commento non trovato")
 
@@ -188,7 +187,7 @@ async def update_comment(
     source: str = Form("feed"),
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    comment = comment_crud.get_comment_by_id(comment_id)
+    comment = comment_db.get_comment_by_id(comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Commento non trovato")
     
@@ -208,9 +207,9 @@ async def update_comment(
         </div>
         """)
 
-    comment_crud.update_comment(comment_id, content)
+    comment_db.update_comment(comment_id, content)
     
-    updated_comment = comment_crud.get_comment_by_id(comment_id)
+    updated_comment = comment_db.get_comment_by_id(comment_id)
 
     html = templates.get_template("comments/partials/comment_item.html").render(
         {"request": request, "comment": updated_comment}
@@ -239,7 +238,7 @@ async def delete_comment_modal(
     source: str = "feed",
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    comment = comment_crud.get_comment_by_id(comment_id)
+    comment = comment_db.get_comment_by_id(comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Commento non trovato")
 
@@ -263,7 +262,7 @@ async def delete_comment(
     source: str = Form("feed"),
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    comment = comment_crud.get_comment_by_id(comment_id)
+    comment = comment_db.get_comment_by_id(comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Commento non trovato")
 
@@ -273,11 +272,11 @@ async def delete_comment(
 
     post_id = comment.post_id
 
-    comment_crud.delete_comment(comment_id)
+    comment_db.delete_comment(comment_id)
 
-    comments = await comment_crud.get_comments_of_post(post_id)
+    comments = await comment_db.get_comments_of_post(post_id)
 
-    commented_by_me = await comment_crud.has_user_commented(post_id=post_id, username=user.username)
+    commented_by_me = await comment_db.has_user_commented(post_id=post_id, username=user.username)
     button_html = templates.get_template(
         "posts/partials/comment_button.html"
     ).render({

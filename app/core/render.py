@@ -1,6 +1,6 @@
 from fastapi import Request
 from app.core.config import templates
-from app.core.dependencies import optional_current_user_cookie
+from app.core.security import optional_current_user_cookie
 
 
 async def render(request: Request, template: str, context: dict | None = None):

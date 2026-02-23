@@ -1,114 +1,24 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, Response
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-import jwt
+from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.dependencies import optional_current_user_cookie
 from app.schemas.user import UserInDB, UserPublic
 from app.schemas.token import Token
-from app.db import user as user_crud
+from app.db import user as user_db
 from app.core.security import (
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    authenticate_user,
+    get_current_active_user,
     hash_password,
-    verify_password,
     create_access_token,
-    SECRET_KEY,
-    ALGORITHM,
-)
+    )
 from app.core.config import templates
 
-# ------------------------------------------------------------------
 
 router = APIRouter(tags=["auth"])
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token", auto_error=False)
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# ------------------------------------------------------------------
-# Auth logic
-# ------------------------------------------------------------------
-
-def authenticate_user(username: str, password: str) -> UserInDB | None:
-    user = user_crud.get_user_by_username(username)
-
-    if not user:
-        return None
-
-    if not verify_password(password, user.password_hash):
-        return None
-
-    return user
-
-# ------------------------------------------------------------------
-# Dependencies
-# ------------------------------------------------------------------
-
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-) -> UserInDB:
-
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-
-        if username is None:
-            raise credentials_exception
-
-    except jwt.InvalidTokenError:
-        raise credentials_exception
-
-    user = user_crud.get_user_by_username(username)
-
-    if user is None:
-        raise credentials_exception
-
-    return user
-
-async def get_current_user_cookie(
-    access_token: str | None = Cookie(default=None),
-) -> UserInDB:
-    if not access_token:
-        raise HTTPException(status_code=401)
-
-    try:
-        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-    except Exception:
-        raise HTTPException(status_code=401)
-
-    user = user_crud.get_user_by_username(username)
-    if not user:
-        raise HTTPException(status_code=401)
-
-    return user
-
-async def get_current_active_user(
-    current_user: Annotated[UserInDB, Depends(get_current_user)],
-) -> UserInDB:
-
-    if not current_user.is_active:
-        raise HTTPException(status_code=403, detail="Inactive user")
-
-    return current_user
-
-# utilizzato per le azione che richiedono autenticazione, ma non è necessario bloccare l'accesso se il token non è valido (es. like post, commentare)
-async def require_user_cookie(
-    user: UserInDB | None = Depends(optional_current_user_cookie),
-):
-    if not user:
-        raise HTTPException(status_code=401)
-
-    return user
-
 
 # ------------------------------------------------------------------
 # Routes
@@ -219,7 +129,7 @@ async def register_user(
 ):
     password_hash = hash_password(password)
 
-    user = user_crud.create_user(username, email, password_hash)
+    user = user_db.create_user(username, email, password_hash)
 
     # l'eliminazione del messaggio di errore è gestita direttamente nel template del modal tramite hx-on:load,
     # senza usare l'endpoint di empty come per gli altri modali (a scopo dimostrativo di un approccio alternativo)

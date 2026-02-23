@@ -1,12 +1,12 @@
 from typing import Annotated
-from fastapi import Depends, HTTPException, Request, Header, APIRouter
+from fastapi import Depends, Request, Header, APIRouter
 from fastapi.responses import HTMLResponse
 from app.core.config import templates
-from app.core.dependencies import optional_current_user_cookie
+from app.core.security import optional_current_user_cookie
 from app.schemas.user import UserInDB
-from app.db import post as post_crud
-from app.db import user as user_crud
-from app.db import comment as comment_crud
+from app.db import post as post_db
+from app.db import user as user_db
+from app.db import comment as comment_db
 from urllib.parse import urlencode
 
 router = APIRouter(tags=["pages"])
@@ -44,7 +44,7 @@ def right_sidebar(
             {"request": request}
         )
 
-    users = user_crud.get_following_paginated(
+    users = user_db.get_following_paginated(
         username=current_user.username,
         skip=0,
         limit=5,
@@ -78,7 +78,7 @@ async def search_page(
     print("Categorie selezionate:", category_list)
     # QUERY
     if tab == "posts":
-        results = post_crud.search_posts(
+        results = post_db.search_posts(
             query=q,
             categories=category_list,
             skip=skip,
@@ -87,7 +87,7 @@ async def search_page(
         )
 
     elif tab == "users":
-        results = user_crud.search_users(
+        results = user_db.search_users(
             query=q,
             bio=bio,
             skip=skip,
@@ -96,7 +96,7 @@ async def search_page(
         )
 
     elif tab == "comments":
-        results = comment_crud.search_comments(
+        results = comment_db.search_comments(
             query=q,
             categories=category_list,
             skip=skip,
@@ -175,13 +175,13 @@ async def discover_page(
     skip = page * page_size
 
     if tab == "posts":
-        results = post_crud.discover_posts_from_followed_likes(
+        results = post_db.discover_posts_from_followed_likes(
             my_id=current_user.id,
             skip=skip,
             limit=page_size,
         )
     else:
-        results = user_crud.discover_users_from_followed(
+        results = user_db.discover_users_from_followed(
             my_id=current_user.id,
             skip=skip,
             limit=page_size,

@@ -1,13 +1,11 @@
 from typing import Annotated, Union
 from fastapi import APIRouter, HTTPException, Request, Form, Header, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.encoders import jsonable_encoder
+from fastapi.responses import HTMLResponse
 from fastapi import UploadFile, File
 from app.services.media import save_post_media
 
-from app.api.routes.auth import require_user_cookie, optional_current_user_cookie
-from app.schemas.post import Post, PostCreate, PostUpdate
-from app.db import post as post_crud
+from app.core.security import require_user_cookie, optional_current_user_cookie
+from app.db import post as post_db
 from app.core.config import templates
 from app.schemas.user import UserInDB
 
@@ -52,7 +50,7 @@ async def create_post(
 
         media_urls = await save_post_media(media)
 
-        post_crud.create_post(
+        post_db.create_post(
             username=user.username,
             content=content,
             categories=category_list,
@@ -98,7 +96,7 @@ async def edit_post_modal(
     source: str = "feed",
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id if user else None)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
@@ -126,7 +124,7 @@ async def update_post(
     source: str = Form("feed"),
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id if user else None)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
@@ -162,9 +160,9 @@ async def update_post(
 
     media_urls = existing_media_list + new_media_urls
 
-    post_crud.update_post(post_id, content, categories_list, media_urls)
+    post_db.update_post(post_id, content, categories_list, media_urls)
 
-    updated_post = post_crud.get_post_by_id(post_id, user.id)
+    updated_post = post_db.get_post_by_id(post_id, user.id)
 
     # render corretto in base alla provenienza
     if source == "detail":
@@ -222,7 +220,7 @@ async def delete_post_modal(
     source: str = "feed",
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id if user else None)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
@@ -247,7 +245,7 @@ async def delete_post(
     source: str = Form("feed"),
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
-    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id if user else None)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
@@ -255,7 +253,7 @@ async def delete_post(
     if not user or (user.username != post["author"] and user.role != "ADMIN"):
         raise HTTPException(status_code=403, detail="Permesso negato")
 
-    post_crud.delete_post(post_id)
+    post_db.delete_post(post_id)
 
     # risposta HTMX con flash e rimozione modal
     flash_html = """
@@ -296,7 +294,7 @@ async def post_feed(
     user: UserInDB | None = Depends(optional_current_user_cookie)
 ):
     skip = page * page_size
-    posts = await post_crud.get_posts_paginated(skip, page_size, user.id if user else None)
+    posts = await post_db.get_posts_paginated(skip, page_size, user.id if user else None)
 
     return templates.TemplateResponse(
         "partials/feed.html",
@@ -316,7 +314,7 @@ async def post_detail(
     user: UserInDB | None = Depends(optional_current_user_cookie),
     hx_request: Annotated[Union[str, None], Header()] = None,
 ):
-    post = post_crud.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id if user else None)
 
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -339,7 +337,7 @@ async def like_post(
     post_id: str,
     user: UserInDB = Depends(require_user_cookie),
 ):
-    liked, like_count = post_crud.toggle_like(post_id, user.username)
+    liked, like_count = post_db.toggle_like(post_id, user.username)
 
     return templates.TemplateResponse(
         "posts/partials/like_button.html",

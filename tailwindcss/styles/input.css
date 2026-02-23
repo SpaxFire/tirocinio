@@ -59,23 +59,23 @@
 
 
     .btn-primary {
-        @apply cursor-pointer bg-blue-600 text-white hover:bg-blue-700 rounded-full disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:bg-gray-300;
+        @apply cursor-pointer bg-blue-600 text-white hover:bg-blue-700 rounded-full transition disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed disabled:hover:bg-gray-300;
     }
 
     .btn-secondary {
-        @apply cursor-pointer bg-black text-white hover:text-black hover:bg-white hover:outline-2 hover:outline-offset-2 hover:outline-black focus:text-white focus:bg-black rounded-full;
+        @apply cursor-pointer bg-black text-white hover:text-black hover:bg-white hover:outline-2 hover:outline-offset-2 hover:outline-black focus:text-white focus:bg-black rounded-full transition;
     }
 
     .btn-success {
-        @apply cursor-pointer bg-green-600 text-white hover:bg-green-700 rounded-full;
+        @apply cursor-pointer bg-green-600 text-white hover:bg-green-700 rounded-full transition;
     }
 
     .btn-danger {
-        @apply cursor-pointer bg-red-600 text-white hover:bg-red-700 rounded-full;
+        @apply cursor-pointer bg-red-600 text-white hover:bg-red-700 rounded-full transition;
     }
 
     .btn-danger-transition {
-        @apply cursor-pointer bg-gray-200 text-black hover:bg-red-600 hover:text-white transition rounded-full;
+        @apply cursor-pointer bg-gray-200 text-black hover:bg-red-600 hover:text-white rounded-full transition;
     }
 
     .msg-success {
