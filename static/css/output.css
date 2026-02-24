@@ -391,9 +391,6 @@
   .table {
     display: table;
   }
-  .aspect-\[4\/3\] {
-    aspect-ratio: 4/3;
-  }
   .size-6 {
     width: calc(var(--spacing) * 6);
     height: calc(var(--spacing) * 6);
@@ -674,6 +671,9 @@
   }
   .bg-blue-100 {
     background-color: var(--color-blue-100);
+  }
+  .bg-blue-600 {
+    background-color: var(--color-blue-600);
   }
   .bg-gray-100 {
     background-color: var(--color-gray-100);

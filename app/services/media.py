@@ -3,8 +3,8 @@ import uuid
 from fastapi import UploadFile, HTTPException
 
 UPLOAD_DIR = "static/uploads/posts"
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/avif"}
-MAX_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/avif", "image/gif", "video/mp4", "video/webm", "video/avi"}
+MAX_SIZE = 1000 * 1024 * 1024  # 5MB
 
 
 async def save_post_media(files: list[UploadFile] | None):
