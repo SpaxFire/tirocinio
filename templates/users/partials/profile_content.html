@@ -32,6 +32,11 @@
                     </div>
 
                     <div>
+                        <span class="text-black font-semibold">{{ user.comment_count }}</span>
+                        <span class="text-gray-500"> Commenti</span>
+                    </div>
+
+                    <div>
                         <span class="text-black font-semibold">{{ user.follower_count }}</span>
                         <span class="text-gray-500"> Follower</span>
                     </div>
@@ -110,29 +115,29 @@
 
                 <button hx-get="/u/{{ user.username }}/comments" hx-target="#profile-content"
                     class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/comments' %} active {% endif%}"
-                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/comments' %} hx-trigger="click"
-                    {% endif %}>
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/comments' or
+                    request.url.path=='/u/' ~ user.username ~ '/comments' %} hx-trigger="load, click" {% endif %}>
                     Commenti
                 </button>
 
                 <button hx-get="/u/{{ user.username }}/likes" hx-target="#profile-content"
                     class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/likes' %} active {% endif%}"
-                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/likes' %} hx-trigger="click" {%
-                    endif %}>
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/likes' or request.url.path=='/u/'
+                    ~ user.username ~ '/likes' %} hx-trigger="load, click" {% endif %}>
                     Mi piace
                 </button>
 
                 <button hx-get="/u/{{ user.username }}/followers" hx-target="#profile-content"
                     class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/followers' %} active {% endif%}"
-                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/followers' %}
-                    hx-trigger="load, click" {% endif %}>
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/followers' or
+                    request.url.path=='/u/' ~ user.username ~ '/followers' %} hx-trigger="load, click" {% endif %}>
                     Follower
                 </button>
 
                 <button hx-get="/u/{{ user.username }}/following" hx-target="#profile-content"
                     class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/following' %} active {% endif %}"
-                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/following' %}
-                    hx-trigger="load, click" {% endif %}>
+                    hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/following' or
+                    request.url.path=='/u/' ~ user.username ~ '/following' %} hx-trigger="load, click" {% endif %}>
                     Seguiti
                 </button>
             </nav>

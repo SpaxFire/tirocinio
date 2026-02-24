@@ -154,7 +154,19 @@ async def update_post(
     ]
 
     if media:
-        new_media_urls = await save_post_media(media)
+        try:
+            new_media_urls = await save_post_media(media)
+        except HTTPException as e:
+            return HTMLResponse(f"""
+            <div id="flash-container" hx-swap-oob="innerHTML">
+                <div class="msg-danger"
+                    hx-get="/empty"
+                    hx-trigger="load delay:4s"
+                    hx-swap="delete">
+                    {e.detail}
+                </div>
+            </div>
+            """)
     else:
         new_media_urls = []
 

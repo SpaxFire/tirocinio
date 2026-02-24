@@ -13,6 +13,7 @@ class UserBase(BaseModel):
 
 class UserPublic(UserBase):
     post_count: int = 0
+    comment_count: int = 0
     follower_count: int = 0
     following_count: int = 0
     total_likes_received: int = 0

@@ -3,7 +3,7 @@ import uuid
 from fastapi import UploadFile, HTTPException
 
 UPLOAD_DIR = "static/uploads/posts"
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/avif"}
 MAX_SIZE = 5 * 1024 * 1024  # 5MB
 
 

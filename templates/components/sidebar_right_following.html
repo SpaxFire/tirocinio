@@ -22,16 +22,16 @@
     </div>
 
     {% else %}
+    <div class="flex flex-col items-center justify-center text-center space-y-3">
+        <p class="text-sm text-gray-500">
+            Non segui ancora nessuno.
+        </p>
 
-    <p class="text-sm text-gray-500">
-        Non segui ancora nessuno.
-    </p>
-
-    <a hx-get="/search?tab=users" hx-target="#main-content" hx-push-url="true"
-        class="text-sm btn-primary px-3 py-2 rounded-full">
-        Cerca nuovi utenti
-    </a>
-
+        <a hx-get="/search?tab=users" hx-target="#main-content" hx-push-url="true"
+            class="text-sm btn-primary px-3 py-2 rounded-full">
+            Cerca nuovi utenti
+        </a>
+    </div>
     {% endif %}
 
 </div>

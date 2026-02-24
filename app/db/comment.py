@@ -24,7 +24,7 @@ async def get_comments_of_post(
         params["limit"] = limit
 
     query += """
-    MATCH (u:User)-[:CREATED]->(c)
+    MATCH (u:User)-[:WROTE]->(c)
     RETURN
         c.id AS id,
         c.content AS text,
@@ -71,7 +71,7 @@ async def has_user_commented(post_id: str, username: str) -> bool:
     MATCH (u:User {username: $username})
     MATCH (p:Post {id: $post_id})
     RETURN EXISTS {
-        MATCH (u)-[:CREATED]->(:Comment)-[:ON_POST]->(p)
+        MATCH (u)-[:WROTE]->(:Comment)-[:ON_POST]->(p)
     } AS commented_by_me
     """
 
@@ -93,7 +93,7 @@ def create_comment(post_id: str, username: str, content: str):
         updated_at: datetime()
     })
 
-    MERGE (u)-[:CREATED]->(c)
+    MERGE (u)-[:WROTE]->(c)
     MERGE (c)-[:ON_POST]->(p)
     """
 
@@ -109,7 +109,7 @@ def get_comment_by_id(comment_id: str) -> CommentPublic | None:
     with driver.session() as session:
         result = session.run(
             """
-            MATCH (c:Comment {id: $comment_id})<-[:CREATED]-(u:User)
+            MATCH (c:Comment {id: $comment_id})<-[:WROTE]-(u:User)
             OPTIONAL MATCH (c)-[:ON_POST]->(p:Post)
             RETURN c.id AS id,
                    c.content AS text,
@@ -163,7 +163,7 @@ def delete_comment(comment_id: str):
 def search_comments(query: str, categories: list[str], skip: int, limit: int):
     records, _, _ = driver.execute_query(
         """
-        MATCH (author:User)-[:CREATED]->(c:Comment)-[:ON_POST]->(p:Post)
+        MATCH (author:User)-[:WROTE]->(c:Comment)-[:ON_POST]->(p:Post)
         OPTIONAL MATCH (p)-[:IN_CATEGORY]->(cat:Category)
 
         WITH 
@@ -232,7 +232,7 @@ def search_comments(query: str, categories: list[str], skip: int, limit: int):
 def get_all_comments_paginated(skip: int, limit: int):
     records, _, _ = driver.execute_query(
         """
-        MATCH (author:User)-[:CREATED]->(c:Comment)-[:ON_POST]->(p:Post)
+        MATCH (author:User)-[:WROTE]->(c:Comment)-[:ON_POST]->(p:Post)
         MATCH (post_author:User)-[:CREATED]->(p)
 
         WITH c, p, author, post_author

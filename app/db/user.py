@@ -39,15 +39,22 @@ def get_user_profile_by_username(username: str, my_id: str | None) -> UserPublic
     OPTIONAL MATCH (u)-[:CREATED]->(p:Post)
     WITH u, count(DISTINCT p) AS post_count
 
+    OPTIONAL MATCH (u)-[:WROTE]->(c:Comment)
+    WITH u, post_count,
+         count(DISTINCT c) AS comment_count
+
     OPTIONAL MATCH (u)-[:CREATED]->(p2:Post)<-[:LIKES]-(liker:User)
-    WITH u, post_count, count(liker) AS total_likes_received
+    WITH u, post_count, comment_count,
+         count(liker) AS total_likes_received
 
     OPTIONAL MATCH (u)<-[:FOLLOWS]-(follower:User)
-    WITH u, post_count, total_likes_received,
+    WITH u, post_count, comment_count,
+         total_likes_received,
          count(DISTINCT follower) AS follower_count
 
     OPTIONAL MATCH (u)-[:FOLLOWS]->(following:User)
-    WITH u, post_count, total_likes_received,
+    WITH u, post_count, comment_count,
+         total_likes_received,
          follower_count,
          count(DISTINCT following) AS following_count
 
@@ -57,6 +64,7 @@ def get_user_profile_by_username(username: str, my_id: str | None) -> UserPublic
     RETURN
         u,
         post_count,
+        comment_count,
         total_likes_received,
         follower_count,
         following_count,
@@ -86,6 +94,7 @@ def get_user_profile_by_username(username: str, my_id: str | None) -> UserPublic
             is_active=u.get("is_active", True),
 
             post_count=record["post_count"],
+            comment_count=record["comment_count"],
             follower_count=record["follower_count"],
             following_count=record["following_count"],
             total_likes_received=record["total_likes_received"],
@@ -147,7 +156,7 @@ async def get_user_posts_paginated(username: str, skip: int, limit: int, my_id: 
         // ---- CURRENT USER ----
         OPTIONAL MATCH (me:User {id: $my_id})
         OPTIONAL MATCH (me)-[ml:LIKES]->(p)
-        OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+        OPTIONAL MATCH (me)-[:WROTE]->(myComment:Comment)-[:ON_POST]->(p)
 
         WITH u, p, like_count, comment_count, categories,
              ml, count(DISTINCT myComment) AS my_comments
@@ -197,7 +206,7 @@ async def get_user_posts_paginated(username: str, skip: int, limit: int, my_id: 
 async def get_user_comments_paginated(username: str, skip: int, limit: int, my_id: str | None):
     records, _, _ = driver.execute_query(
         """
-        MATCH (u:User {username: $username})-[:CREATED]->(c:Comment)
+        MATCH (u:User {username: $username})-[:WROTE]->(c:Comment)
         MATCH (c)-[:ON_POST]->(p:Post)
         MATCH (postAuthor:User)-[:CREATED]->(p)
 
@@ -276,7 +285,7 @@ async def get_user_likes_paginated(username: str, skip: int, limit: int, my_id: 
         // ---- CURRENT USER STATE ----
         OPTIONAL MATCH (me:User {id: $my_id})
         OPTIONAL MATCH (me)-[ml:LIKES]->(p)
-        OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+        OPTIONAL MATCH (me)-[:WROTE]->(myComment:Comment)-[:ON_POST]->(p)
 
         WITH u, p, author, like_count, comment_count, categories,
              ml, count(DISTINCT myComment) AS my_comments
@@ -332,20 +341,28 @@ def get_user_with_counts(username: str, my_id: str | None):
     OPTIONAL MATCH (u)-[:CREATED]->(p:Post)
     WITH u, count(DISTINCT p) AS post_count
 
+    /* ---------------- COMMENT COUNT (WRITTEN BY USER) ---------------- */
+    OPTIONAL MATCH (u)-[:WROTE]->(c:Comment)
+    WITH u, post_count,
+         count(DISTINCT c) AS comment_count
+
     /* ---------------- TOTAL LIKES RECEIVED ---------------- */
     OPTIONAL MATCH (u)-[:CREATED]->(p2:Post)<-[:LIKES]-(liker:User)
-    WITH u, post_count, count(liker) AS total_likes_received
+    WITH u, post_count, comment_count,
+         count(liker) AS total_likes_received
 
     /* ---------------- FOLLOWER COUNT ---------------- */
     OPTIONAL MATCH (u)<-[:FOLLOWS]-(f:User)
-    WITH u, post_count, total_likes_received,
-        count(DISTINCT f) AS follower_count
+    WITH u, post_count, comment_count,
+         total_likes_received,
+         count(DISTINCT f) AS follower_count
 
     /* ---------------- FOLLOWING COUNT ---------------- */
     OPTIONAL MATCH (u)-[:FOLLOWS]->(f2:User)
-    WITH u, post_count, total_likes_received,
-        follower_count,
-        count(DISTINCT f2) AS following_count
+    WITH u, post_count, comment_count,
+         total_likes_received,
+         follower_count,
+         count(DISTINCT f2) AS following_count
 
     /* ---------------- FOLLOWING BY ME ---------------- */
     OPTIONAL MATCH (me:User {id: $my_id})
@@ -354,6 +371,7 @@ def get_user_with_counts(username: str, my_id: str | None):
     RETURN
         u,
         post_count,
+        comment_count,
         total_likes_received,
         follower_count,
         following_count,
@@ -376,6 +394,7 @@ def get_user_with_counts(username: str, my_id: str | None):
     return {
         **dict(u),
         "post_count": record["post_count"],
+        "comment_count": record["comment_count"],  # 👈 aggiunto
         "total_likes_received": record["total_likes_received"],
         "follower_count": record["follower_count"],
         "following_count": record["following_count"],

@@ -162,7 +162,7 @@ async def get_posts_paginated(skip: int, limit: int, user_id: str | None):
         // ---- CURRENT USER ----
         OPTIONAL MATCH (me:User {id: $user_id})
         OPTIONAL MATCH (me)-[ml:LIKES]->(p)
-        OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+        OPTIONAL MATCH (me)-[:WROTE]->(myComment:Comment)-[:ON_POST]->(p)
 
         WITH u, p, like_count, comment_count, categories,
              ml, count(DISTINCT myComment) AS my_comments
@@ -223,7 +223,7 @@ def get_post_by_id(post_id: str, user_id: str | None) -> dict | None:
 
     OPTIONAL MATCH (me:User {id: $user_id})
     OPTIONAL MATCH (me)-[ml:LIKES]->(p)
-    OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+    OPTIONAL MATCH (me)-[:WROTE]->(myComment:Comment)-[:ON_POST]->(p)
 
     WITH p, u, categories, comment_count, like_count, ml,
         count(DISTINCT myComment) AS my_comments
@@ -304,7 +304,7 @@ def search_posts(query: str, categories: list[str], skip: int, limit: int, my_id
         // ---- CURRENT USER STATE ----
         OPTIONAL MATCH (me:User {id: $my_id})
         OPTIONAL MATCH (me)-[ml:LIKES]->(p)
-        OPTIONAL MATCH (me)-[:CREATED]->(myComment:Comment)-[:ON_POST]->(p)
+        OPTIONAL MATCH (me)-[:WROTE]->(myComment:Comment)-[:ON_POST]->(p)
 
         WITH u, p, categories, like_count, comment_count, ml,
             count(DISTINCT myComment) AS my_comments
@@ -372,7 +372,7 @@ def discover_posts_from_followed_likes(
         AND NOT (me)-[:LIKES]->(p)
 
         // escludo post già commentati da me
-        AND NOT (me)-[:CREATED]->(:Comment)-[:ON_POST]->(p)
+        AND NOT (me)-[:WROTE]->(:Comment)-[:ON_POST]->(p)
 
         // conteggio quanti followed hanno messo like
         WITH p, author, count(DISTINCT f) AS score

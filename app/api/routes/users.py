@@ -424,7 +424,7 @@ async def update_user(
         elif new_password != new_password_confirm:
             msg_error = "Le password non coincidono"
         else:
-            # 👤 USER normale → serve password attuale
+            # USER normale → serve password attuale
             if current_user.role != "ADMIN":
                 if not current_password:
                     msg_error = "Password attuale obbligatoria"
