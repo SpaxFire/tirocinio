@@ -1,0 +1,15 @@
+def get_post_by_id(post_id: str, ...)
+    driver = get_driver()
+    records, _, _ = driver.execute_query(
+        """
+        MATCH (p:Post {id: $id})
+        RETURN p
+        """,
+        id=post_id,
+        database_="neo4j",
+    )
+    if not records:
+        return None
+
+    post_node = records[0]["p"]
+    return dict(post_node)

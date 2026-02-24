@@ -240,7 +240,6 @@ def get_post_by_id(post_id: str, user_id: str | None) -> dict | None:
         p.created_at AS created_at
     """
 
-
     with get_driver().session() as session:
         record = session.run(
             query,
