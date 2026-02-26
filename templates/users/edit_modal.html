@@ -1,8 +1,8 @@
+{% set title = "Impostazioni account" %}
 {% set content %}
 {% set current_user = current_user(request) %}
 {% set is_admin = current_user.role == "ADMIN" %}
 {% set is_owner = current_user.username == user.username %}
-<h2 class="font-semibold mb-6">Impostazioni account</h2>
 
 <div class="flex-col gap-8">
 

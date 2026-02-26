@@ -1,9 +1,9 @@
+{% set title = "Elimina account" %}
+
 {% set content %}
 {% set current_user = current_user(request) %}
 {% set is_admin = current_user.role == "ADMIN" %}
-<h2 class="text-lg font-semibold mb-4">
-    Conferma eliminazione account
-</h2>
+{% set is_owner = current_user.username == user.username %}
 
 <p class="mb-4">
     Questa azione non è reversibile.

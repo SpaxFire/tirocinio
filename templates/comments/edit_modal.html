@@ -1,6 +1,6 @@
-{% set content %}
-<h2 class="text-lg font-semibold mb-4">Modifica commento</h2>
+{% set title = "Modifica commento" %}
 
+{% set content %}
 <form hx-post="/comments/{{ comment.id }}/update" hx-target="this" hx-swap="none" class="flex flex-col gap-3">
 
     <input type="hidden" name="source" value="{{ source }}">

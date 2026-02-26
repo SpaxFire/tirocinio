@@ -1,5 +1,6 @@
+{% set title = "Modifica post" %}
+
 {% set content %}
-<h2 class="text-lg font-semibold mb-4">Modifica Post</h2>
 <form hx-post="/posts/{{ post.id }}/update" hx-target="this" hx-swap="none" enctype="multipart/form-data"
     class="flex flex-col gap-3">
 

@@ -1,7 +1,6 @@
+{% set title = "Scrivi un commento" %}
+
 {% set content %}
-
-<h2 class="text-lg font-semibold mb-4">Scrivi un commento</h2>
-
 <form hx-post="/posts/{{ post.id }}/comments" hx-target="this" hx-swap="none" class="flex flex-col gap-3">
 
     <!-- per sapere da dove proviene il commento -->

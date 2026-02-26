@@ -24,7 +24,7 @@ async def get_comments(
 
     total_count = await comment_db.count_comments_of_post(post_id)
 
-    show_all_button = source == "feed" and total_count > 5
+    show_all_button = limit is not None and total_count > limit
 
     return templates.TemplateResponse(
         "posts/comments.html",

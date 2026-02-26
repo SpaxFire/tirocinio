@@ -443,11 +443,11 @@ def get_following_paginated(username: str, skip: int, limit: int, my_id: str | N
         MATCH (u:User {username: $username})
 
         // Utenti che segue
-        MATCH (u)-[:FOLLOWS]->(f:User)
+        MATCH (u)-[rel:FOLLOWS]->(f:User)
 
         // Paginazione prima per evitare di portare tutti i follower in memoria
         WITH f
-        ORDER BY f.username
+        ORDER BY rel.created_at DESC, f.username
         SKIP $skip
         LIMIT $limit
 
@@ -610,7 +610,7 @@ def search_users(query: str, bio: str, skip: int, limit: int, my_id: str | None)
             ($bio = "" OR u.bio IS NOT NULL AND toLower(u.bio) CONTAINS toLower($bio))
 
         WITH u
-        ORDER BY u.username
+        ORDER BY toLower(u.username), u.username
         SKIP $skip
         LIMIT $limit
 

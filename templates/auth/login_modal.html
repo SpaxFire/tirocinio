@@ -1,5 +1,6 @@
+{% set title = "Login" %}
+
 {% set content %}
-<h2 class="text-lg font-semibold mb-4">Login</h2>
 {% if success_message %}
 <div class="msg-success" hx-get="/empty" hx-trigger="load delay:4s" hx-swap="delete">
     {{ success_message }}
