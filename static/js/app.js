@@ -44,6 +44,7 @@ function addCategory(name) {
     removeBtn.type = "button";
     removeBtn.innerHTML = "✕";
     removeBtn.className = "text-blue-700 hover:text-red-600 font-bold";
+    removeBtn.style.cursor = "pointer";
 
     removeBtn.onclick = function () {
         removeCategory(name, tag);
@@ -102,6 +103,7 @@ function initSelectedCategories() {
         removeBtn.type = "button";
         removeBtn.innerHTML = "✕";
         removeBtn.className = "text-blue-700 hover:text-red-600 font-bold";
+        removeBtn.style.cursor = "pointer";
 
         removeBtn.onclick = function () {
             removeCategory(clean, tag);
