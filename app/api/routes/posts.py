@@ -94,9 +94,9 @@ async def edit_post_modal(
     post_id: str,
     request: Request,
     source: str = "feed",
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
-    post = post_db.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
@@ -122,9 +122,9 @@ async def update_post(
     existing_media: str = Form(""),
     categories: str = Form(""),
     source: str = Form("feed"),
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
-    post = post_db.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
@@ -230,9 +230,9 @@ async def delete_post_modal(
     post_id: str,
     request: Request,
     source: str = "feed",
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
-    post = post_db.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 
@@ -255,9 +255,9 @@ async def delete_post(
     post_id: str,
     request: Request,
     source: str = Form("feed"),
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
-    post = post_db.get_post_by_id(post_id, user.id if user else None)
+    post = post_db.get_post_by_id(post_id, user.id)
     if not post:
         raise HTTPException(status_code=404, detail="Post non trovato")
 

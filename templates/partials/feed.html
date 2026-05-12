@@ -5,12 +5,12 @@
 {% if has_more %}
 <div hx-get="{{ pagination_url }}{% if '?' in pagination_url %}&{% else %}?{% endif %}page={{ next_page }}"
     hx-trigger="revealed" hx-target="this" hx-swap="outerHTML"
-    class="min-h-16 flex items-center justify-center gap-2 text-gray-500" aria-label="Caricamento">
+    class="my-6 flex items-center justify-center gap-2 text-gray-500" aria-label="Caricamento">
     <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
         <circle class="opacity-25" cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="4">
         </circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path>
     </svg>
-    <span class="text-sm">Caricamento...</span>
+    <span class="text-sm font-semibold">Caricamento...</span>
 </div>
 {% endif %}

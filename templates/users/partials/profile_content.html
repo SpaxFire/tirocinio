@@ -106,7 +106,7 @@
         }
      ">
 
-                <button hx-get=" /u/{{ user.username }}/posts" hx-target="#profile-content"
+                <button hx-get="/u/{{ user.username }}/posts" hx-target="#profile-content"
                     class="py-3 nav-item cursor-pointer {% if pagination_url== '/u/' ~ user.username ~ '/posts' or request.url.path=='/u/' ~ user.username %} active {% endif%}"
                     hx-push-url="true" {% if pagination_url=='/u/' ~ user.username ~ '/posts' or request.url.path=='/u/'
                     ~ user.username %} hx-trigger="load, click" {% endif %}>

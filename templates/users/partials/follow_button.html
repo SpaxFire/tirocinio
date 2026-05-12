@@ -2,7 +2,7 @@
     hx-trigger="follow-updated-{{ username }} from:body" hx-push-url="false" hx-target="this" hx-swap="outerHTML">
 
     <button hx-post="/u/{{ username }}/follow" hx-target="#follow-btn-{{ username }}" hx-swap="none"
-        hx-trigger="click consume" hx-push-url="false" class="px-5 py-2 rounded-full transition
+        hx-trigger="click consume" hx-push-url="false" class="relative min-w-[148px] group px-5 py-2 rounded-full transition
         {% if following %}
             btn-danger-transition
         {% else %}
@@ -11,13 +11,14 @@
         ">
 
         {% if following %}
-        Segui già
+        <span class="group-hover:hidden">Segui già</span>
+        <span class="hidden group-hover:inline text-sm">Smetti di seguire</span>
         {% else %}
         Segui
         {% endif %}
     </button>
 
-    <div class="text-sm text-gray-400 mt-2 text-center">
+    <div class="text-sm font-semibold text-gray-400 mt-2 text-center">
         {{ follower_count }} follower
     </div>
 

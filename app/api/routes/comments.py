@@ -160,7 +160,7 @@ async def edit_comment_modal(
     comment_id: str,
     request: Request,
     source: str = "feed",
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
     comment = comment_db.get_comment_by_id(comment_id)
     if not comment:
@@ -185,7 +185,7 @@ async def update_comment(
     request: Request,
     content: str = Form(""),
     source: str = Form("feed"),
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
     comment = comment_db.get_comment_by_id(comment_id)
     if not comment:
@@ -236,7 +236,7 @@ async def delete_comment_modal(
     comment_id: str,
     request: Request,
     source: str = "feed",
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
     comment = comment_db.get_comment_by_id(comment_id)
     if not comment:
@@ -260,7 +260,7 @@ async def delete_comment(
     comment_id: str,
     request: Request,
     source: str = Form("feed"),
-    user: UserInDB | None = Depends(optional_current_user_cookie)
+    user: UserInDB = Depends(require_user_cookie)
 ):
     comment = comment_db.get_comment_by_id(comment_id)
     if not comment:

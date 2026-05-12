@@ -11,13 +11,11 @@
     --color-red-200: oklch(88.5% 0.062 18.334);
     --color-red-500: oklch(63.7% 0.237 25.331);
     --color-red-600: oklch(57.7% 0.245 27.325);
-    --color-red-700: oklch(50.5% 0.213 27.518);
     --color-yellow-500: oklch(79.5% 0.184 86.047);
     --color-green-50: oklch(98.2% 0.018 155.826);
     --color-green-200: oklch(92.5% 0.084 155.995);
     --color-green-500: oklch(72.3% 0.219 149.579);
     --color-green-600: oklch(62.7% 0.194 149.214);
-    --color-green-700: oklch(52.7% 0.154 150.069);
     --color-blue-100: oklch(93.2% 0.032 255.585);
     --color-blue-200: oklch(88.2% 0.059 254.128);
     --color-blue-600: oklch(54.6% 0.245 262.881);
@@ -482,6 +480,9 @@
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
   }
+  .min-w-\[148px\] {
+    min-width: 148px;
+  }
   .flex-1 {
     flex: 1;
   }
@@ -851,6 +852,20 @@
     --tw-duration: 200ms;
     transition-duration: 200ms;
   }
+  .group-hover\:hidden {
+    &:is(:where(.group):hover *) {
+      @media (hover: hover) {
+        display: none;
+      }
+    }
+  }
+  .group-hover\:inline {
+    &:is(:where(.group):hover *) {
+      @media (hover: hover) {
+        display: inline;
+      }
+    }
+  }
   .group-hover\:text-blue-600 {
     &:is(:where(.group):hover *) {
       @media (hover: hover) {
@@ -942,6 +957,8 @@
     font-weight: var(--font-weight-semibold);
   }
   a {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-gray-800);
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
@@ -1033,6 +1050,8 @@
       background-color: color-mix(in oklab, var(--color-black) 30%, transparent);
     }
     padding: calc(var(--spacing) * 3);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     --tw-backdrop-blur: blur(var(--blur-sm));
     -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
     backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
@@ -1052,14 +1071,43 @@
     cursor: pointer;
     border-radius: calc(infinity * 1px);
     background-color: var(--color-blue-600);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-white);
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-blue-700);
+        background-color: var(--color-white);
       }
+    }
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-blue-600);
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-style: var(--tw-outline-style);
+        outline-width: 2px;
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-offset: 0px;
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-color: var(--color-blue-600);
+      }
+    }
+    &:focus {
+      background-color: var(--color-blue-600);
+    }
+    &:focus {
+      color: var(--color-white);
     }
     &:disabled {
       cursor: not-allowed;
@@ -1077,11 +1125,28 @@
         }
       }
     }
+    &:disabled {
+      &:hover {
+        @media (hover: hover) {
+          color: var(--color-gray-500);
+        }
+      }
+    }
+    &:disabled {
+      &:hover {
+        @media (hover: hover) {
+          --tw-outline-style: none;
+          outline-style: none;
+        }
+      }
+    }
   }
   .btn-secondary {
     cursor: pointer;
     border-radius: calc(infinity * 1px);
     background-color: var(--color-gray-800);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-white);
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
@@ -1104,7 +1169,7 @@
     }
     &:hover {
       @media (hover: hover) {
-        outline-offset: 2px;
+        outline-offset: 0px;
       }
     }
     &:hover {
@@ -1123,34 +1188,94 @@
     cursor: pointer;
     border-radius: calc(infinity * 1px);
     background-color: var(--color-green-600);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-white);
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-green-700);
+        background-color: var(--color-white);
       }
+    }
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-green-600);
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-style: var(--tw-outline-style);
+        outline-width: 2px;
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-offset: 0px;
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-color: var(--color-green-600);
+      }
+    }
+    &:focus {
+      background-color: var(--color-green-600);
+    }
+    &:focus {
+      color: var(--color-white);
     }
   }
   .btn-danger {
     cursor: pointer;
     border-radius: calc(infinity * 1px);
     background-color: var(--color-red-600);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-white);
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
     &:hover {
       @media (hover: hover) {
-        background-color: var(--color-red-700);
+        background-color: var(--color-white);
       }
+    }
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-red-600);
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-style: var(--tw-outline-style);
+        outline-width: 2px;
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-offset: 0px;
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        outline-color: var(--color-red-600);
+      }
+    }
+    &:focus {
+      background-color: var(--color-red-600);
+    }
+    &:focus {
+      color: var(--color-white);
     }
   }
   .btn-danger-transition {
     cursor: pointer;
     border-radius: calc(infinity * 1px);
     background-color: var(--color-gray-200);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-gray-800);
     transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
@@ -1170,20 +1295,24 @@
     margin-bottom: calc(var(--spacing) * 3);
     border-radius: calc(infinity * 1px);
     border-style: var(--tw-border-style);
-    border-width: 1px;
+    border-width: 2px;
     border-color: var(--color-green-200);
     background-color: var(--color-green-50);
     padding: calc(var(--spacing) * 3);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-green-600);
   }
   .msg-danger {
     margin-bottom: calc(var(--spacing) * 3);
     border-radius: calc(infinity * 1px);
     border-style: var(--tw-border-style);
-    border-width: 1px;
+    border-width: 2px;
     border-color: var(--color-red-200);
     background-color: var(--color-red-50);
     padding: calc(var(--spacing) * 3);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-red-600);
   }
   .img-hover {

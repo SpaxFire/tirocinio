@@ -29,7 +29,7 @@
             {% endif %}
         </div>
 
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR LEFT -->
         <aside id="sidebar-left" class="w-1/4 sticky top-6 h-fit">
             {% include "components/sidebar_left.html" %}
         </aside>
@@ -39,7 +39,7 @@
             {% block content %}{% endblock %}
         </main>
 
-        <!-- RIGHT -->
+        <!-- SIDEBAR RIGHT -->
         <aside id="sidebar-right" class="w-1/4 sticky top-6 h-fit">
             <div hx-get="/sidebar/right" hx-trigger="load" hx-swap="innerHTML">
 
