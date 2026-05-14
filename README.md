@@ -47,8 +47,10 @@ Ambiente di riferimento: Linux.
 
 ### 1) Clona il repository
 
-	git clone <URL_REPOSITORY>
+	git clone https://github.com/SpaxFire/tirocinio
 	cd tirocinio
+    git checkout Progetto_Sistemi
+    git pull origin Progetto_Sistemi
 
 ### 2) Installa Node.js 24 (consigliato con nvm)
 
