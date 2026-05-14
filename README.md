@@ -42,7 +42,7 @@ Ambiente di riferimento: Linux.
 ### Prerequisiti
 
 1. Python 3.10+ installato
-2. Node.js 20+ e npm 10+ installati
+2. Node.js 24+ e npm 10+ installati
 3. Git installato
 
 ### 1) Clona il repository
@@ -50,13 +50,13 @@ Ambiente di riferimento: Linux.
 	git clone <URL_REPOSITORY>
 	cd tirocinio
 
-### 2) Installa Node.js 20 (consigliato con nvm)
+### 2) Installa Node.js 24 (consigliato con nvm)
 
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 	export NVM_DIR="$HOME/.nvm"
 	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-	nvm install 20
-	nvm use 20
+	nvm install 24
+	nvm use 24
 	node -v
 	npm -v
 
