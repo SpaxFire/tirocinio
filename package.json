@@ -1,4 +1,12 @@
 {
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "tw:build": "npx @tailwindcss/cli -i ./tailwindcss/styles/input.css -o ./static/css/output.css",
+    "tw:watch": "npx @tailwindcss/cli -i ./tailwindcss/styles/input.css -o ./static/css/output.css --watch"
+  },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
     "tailwindcss": "^4.1.18"

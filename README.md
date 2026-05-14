@@ -42,7 +42,7 @@ Ambiente di riferimento: Linux.
 ### Prerequisiti
 
 1. Python 3.10+ installato
-2. Node.js e npm installati
+2. Node.js 20+ e npm 10+ installati
 3. Git installato
 
 ### 1) Clona il repository
@@ -50,30 +50,43 @@ Ambiente di riferimento: Linux.
 	git clone <URL_REPOSITORY>
 	cd tirocinio
 
-### 2) Crea e attiva l'ambiente virtuale Python
+### 2) Installa Node.js 20 (consigliato con nvm)
+
+	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+	export NVM_DIR="$HOME/.nvm"
+	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+	nvm install 20
+	nvm use 20
+	node -v
+	npm -v
+
+### 3) Crea e attiva l'ambiente virtuale Python
 
 	python3 -m venv .venv
 	source .venv/bin/activate
 
-### 3) Installa le dipendenze Python
+### 4) Installa le dipendenze Python
 
 	pip install -r requirements.txt
 
-### 4) Installa le dipendenze frontend
+### 5) Installa le dipendenze frontend
 
 	npm install
 
-### 5) Avvia il backend FastAPI (terminale 1)
+### 6) Avvia il backend FastAPI (terminale 1)
 
 	source .venv/bin/activate
 	fastapi dev app/main.py
 
-### 6) Avvia Tailwind in watch (terminale 2)
+### 7) Avvia Tailwind in watch (terminale 2)
 
-	source .venv/bin/activate
-	npx @tailwindcss/cli -i ./tailwindcss/styles/input.css -o ./static/css/output.css --watch
+	npm run tw:watch
 
-### 7) Apri l'app nel browser
+Se usi `nvm`, puoi allineare automaticamente la versione Node richiesta:
+
+	nvm use
+
+### 8) Apri l'app nel browser
 
 	http://127.0.0.1:8000
 
