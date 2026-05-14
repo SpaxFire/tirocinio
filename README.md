@@ -32,3 +32,53 @@ L'applicazione è strutturata secondo un solido **Modello a Tre Strati (Three-Ti
 * 🔍 **Sistema di Ricerca (Active Search):** Motore di ricerca reattivo integrato con HTMX per trovare post, utenti e commenti con aggiornamento istantaneo dei risultati.
 * ⚙️ **Impostazioni Account e Modali:** Realizzazione di operazioni CRUD degli account (l'eliminazione consiste nella disattivazione dell'account, senza rimozione dal database) e gestione fluida delle informazioni personali (profilo, email, password) modificabili tramite finestre modali dinamiche che non interrompono l'esperienza di navigazione.
 * 🛡️ **Gestione Ruoli e Permessi:** Distinzione chiara tra ruoli `Utente` e `Amministratore`, con controlli di autorizzazione per proteggere le rotte e permettere azioni privilegiate agli admin (es. gestione degli account altrui).
+
+## ▶️ Setup e avvio su qualsiasi PC
+
+Questa sezione descrive i passaggi minimi per installare e avviare il progetto da zero.
+
+Ambiente di riferimento: Linux.
+
+### Prerequisiti
+
+1. Python 3.10+ installato
+2. Node.js e npm installati
+3. Git installato
+
+### 1) Clona il repository
+
+	git clone <URL_REPOSITORY>
+	cd tirocinio
+
+### 2) Crea e attiva l'ambiente virtuale Python
+
+	python3 -m venv .venv
+	source .venv/bin/activate
+
+### 3) Installa le dipendenze Python
+
+	pip install -r requirements.txt
+
+### 4) Installa le dipendenze frontend
+
+	npm install
+
+### 5) Avvia il backend FastAPI (terminale 1)
+
+	source .venv/bin/activate
+	fastapi dev app/main.py
+
+### 6) Avvia Tailwind in watch (terminale 2)
+
+	source .venv/bin/activate
+	npx @tailwindcss/cli -i ./tailwindcss/styles/input.css -o ./static/css/output.css --watch
+
+### 7) Apri l'app nel browser
+
+	http://127.0.0.1:8000
+
+### Nota importante
+
+Ogni nuovo terminale richiede la riattivazione dell'ambiente virtuale prima dei comandi Python:
+
+	source .venv/bin/activate
