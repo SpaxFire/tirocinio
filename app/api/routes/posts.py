@@ -8,6 +8,7 @@ from app.core.security import require_user_cookie, optional_current_user_cookie
 from app.db import post as post_db
 from app.core.config import templates
 from app.schemas.user import UserInDB
+from app.services.mqtt_client import mqtt_notification_client
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -50,11 +51,20 @@ async def create_post(
 
         media_urls = await save_post_media(media)
 
-        post_db.create_post(
+        created_post = post_db.create_post(
             username=user.username,
             content=content,
             categories=category_list,
             media_urls=media_urls,
+        )
+
+        mqtt_notification_client.publish(
+            {
+                "type": "post_created",
+                "author": user.username,
+                "content": content,
+                "post_id": created_post.get("id"),
+            }
         )
 
         return HTMLResponse("""

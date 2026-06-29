@@ -86,6 +86,10 @@
         @apply font-semibold text-red-600 bg-red-50 p-3 mb-3 rounded-full border-2 border-red-200;
     }
 
+    .msg-notification {
+        @apply font-semibold text-blue-600 bg-blue-50 p-3 mb-3 rounded-full border-2 border-blue-200 shadow-sm flex items-center gap-2;
+    }
+
     .img-hover {
         @apply ring-2 ring-transparent transition-all duration-200 hover:ring-blue-600;
     }

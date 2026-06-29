@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -6,8 +8,18 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import templates
 from app.core.security import optional_current_user_cookie
 from app.api.router import api_router
+from app.services.mqtt_client import mqtt_notification_client
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    mqtt_notification_client.attach_loop(asyncio.get_running_loop())
+    mqtt_notification_client.start()
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    mqtt_notification_client.stop()
 
 # MIDDLEWARE PER current_user
 class CurrentUserMiddleware(BaseHTTPMiddleware):

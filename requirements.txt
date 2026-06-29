@@ -25,6 +25,7 @@ neo4j==6.2.0
 pwdlib==0.3.0
 pycparser==3.0
 pydantic==2.13.4
+paho-mqtt==2.1.0
 pydantic-extra-types==2.11.1
 pydantic-settings==2.14.1
 pydantic_core==2.46.4
