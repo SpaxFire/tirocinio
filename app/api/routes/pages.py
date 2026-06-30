@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, Request, Header, APIRouter
+from fastapi import Depends, Request, Header, APIRouter, HTTPException, status
 from fastapi.responses import HTMLResponse
 from app.core.config import templates
 from app.core.security import optional_current_user_cookie
@@ -9,9 +9,20 @@ from app.db import user as user_db
 from app.db import comment as comment_db
 from urllib.parse import urlencode
 
+# Inizializza il router e la variabile globale per la blockchain di audit
 router = APIRouter(tags=["pages"])
+audit_blockchain = None
 
+# Funzione Helper di "/admin/audit" per ottenere la blockchain di audit dal modulo principale (app/main.py)
+def _get_audit_blockchain():
+    global audit_blockchain
+    if audit_blockchain is None:
+        from app.main import audit_blockchain as main_audit_blockchain
 
+        audit_blockchain = main_audit_blockchain
+    return audit_blockchain
+
+# Risponde alle richieste GET per la home page
 @router.get("/", response_class=HTMLResponse)
 async def index(
     request: Request,
@@ -33,6 +44,7 @@ async def index(
         {"request": request}
     )
 
+# Risponde alle richieste GET per la barra laterale destra
 @router.get("/sidebar/right", response_class=HTMLResponse)
 def right_sidebar(
     request: Request,
@@ -60,6 +72,7 @@ def right_sidebar(
         }
     )
 
+# Risponde alle richieste GET per la pagina di ricerca
 @router.get("/search", response_class=HTMLResponse)
 async def search_page(
     request: Request,
@@ -163,6 +176,7 @@ async def search_page(
     # NON HX → render normale (già pulito se hai fatto redirect prima)
     return templates.TemplateResponse("search/search.html", context)
 
+# Risponde alle richieste GET per la pagina Discover
 @router.get("/discover", response_class=HTMLResponse)
 async def discover_page(
     request: Request,
@@ -225,6 +239,47 @@ async def discover_page(
         context
     )
 
+
+# ADMIN PAGES, controlla la validità della blockchain di audit e mostra la catena
+@router.get("/admin/audit", response_class=HTMLResponse)
+async def admin_audit_page(
+    request: Request,
+    current_user: UserInDB | None = Depends(optional_current_user_cookie),
+    user: str | None = None,
+    event_type: str | None = None,
+    start_time: str | None = None,
+    end_time: str | None = None,
+):
+    if not current_user or current_user.role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    blockchain = _get_audit_blockchain()
+    chain = getattr(blockchain, "chain", {"chain": []})
+    filtered_chain = blockchain.filter_chain(
+        user=user,
+        event_type=event_type,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    is_valid = blockchain.validate_chain()
+    context = {
+        "request": request,
+        "chain": {**chain, "chain": filtered_chain},
+        "is_valid": is_valid,
+        "active_filters": {
+            "user": user,
+            "event_type": event_type,
+            "start_time": start_time,
+            "end_time": end_time,
+        },
+    }
+
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse("admin/partials/audit_content.html", context)
+
+    return templates.TemplateResponse("admin/audit.html", context)
+
+# Risponde alle richieste GET per l'endpoint vuoto
 @router.get("/empty", response_class=HTMLResponse)
 async def empty():
     """

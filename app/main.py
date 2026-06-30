@@ -6,39 +6,40 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.config import templates
 from app.core.security import optional_current_user_cookie
 from app.api.router import api_router
+from app.services.audit_blockchain import AuditBlockchain
 
+# Inizializziamo la blockchain di audit e la app FastAPI
 app = FastAPI()
+audit_blockchain = AuditBlockchain()
 
-# MIDDLEWARE PER current_user
+# Middleware per gestire l'utente corrente e registrare gli eventi nella blockchain di audit
 class CurrentUserMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-
-        access_token = request.cookies.get("access_token")
-
-        user = await optional_current_user_cookie(access_token)
-
-        request.state.user = user  # disponibile ovunque
-
-        response = await call_next(request)
-        return response
-    
-class CurrentUserMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-
         access_token = request.cookies.get("access_token")
         user = await optional_current_user_cookie(access_token)
 
         request.state.user = user
 
         response = await call_next(request)
-
-        # elimina flash cookie dopo il primo render
+        
+        # Rimuoviamo il cookie flash_message dopo averlo letto da request.cookies
+        # request.cookies contains i cookie inviati dal client, mentre response.delete_cookie rimuove il cookie dalla risposta HTTP inviata al client.
         if request.cookies.get("flash_message"):
             response.delete_cookie("flash_message")
 
+        audit_payload = { # payload dell'evento di audit
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "user": getattr(user, "username", None),
+            "query_params": dict(request.query_params),
+        }
+
+        event_type = f"{request.method.lower()}_request" # tipo di evento basato sul metodo HTTP
+        audit_blockchain.append_event(event_type, audit_payload)
         return response
 
-
+# Aggiungiamo il middleware alla app FastAPI
 app.add_middleware(CurrentUserMiddleware)
 
 
