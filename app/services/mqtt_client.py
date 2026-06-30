@@ -65,6 +65,7 @@ class MqttNotificationClient:
         if self._client is not None and self._connected:
             try:
                 self._client.publish(target_topic, json.dumps(payload), qos=1, retain=False)
+                return
             except Exception as exc:  # pragma: no cover - depends on broker availability
                 logger.warning("MQTT publish failed: %s", exc)
 

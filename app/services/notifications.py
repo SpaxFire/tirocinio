@@ -40,7 +40,7 @@ class NotificationBroker:
         return (
             '<div class="msg-notification transition-all duration-300"'
             'hx-on::load="setTimeout(() => event.target.remove(), 4000)">'
-            f'<div class="font-semibold text-slate-900">Nuovo post da {author}</div>'
+            f'<div class="font-semibold text-slate-900">Nuovo post da {author}:</div>'
             f'<div>{preview}</div>'
             '</div>'
         )
