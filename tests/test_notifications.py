@@ -58,6 +58,40 @@ def test_notifications_stream_endpoint_returns_sse_headers():
         app.dependency_overrides.clear()
 
 
+def test_notification_html_includes_popup_and_oob_target_for_live_page_updates():
+    html = notification_broker.build_post_created_html(
+        {
+            "type": "post_created",
+            "author": "bob",
+            "content": "Contenuto del post",
+            "post_id": "post-123",
+        }
+    )
+
+    assert 'class="msg-notification"' in html
+    assert 'hx-on::load' in html
+    assert 'hx-swap-oob="afterbegin:#notifications-list"' in html
+    assert "Vai al post" in html
+
+
+def test_notification_html_keeps_previous_history_in_live_list_updates():
+    html = notification_broker.build_post_created_html(
+        {
+            "type": "post_created",
+            "author": "bob",
+            "content": "Nuova notifica",
+            "post_id": "post-123",
+        },
+        notifications=[
+            {"author": "alice", "content": "Vecchia notifica", "post_id": "post-1"},
+            {"author": "bob", "content": "Nuova notifica", "post_id": "post-123"},
+        ],
+    )
+
+    assert "Vecchia notifica" in html
+    assert "Nuova notifica" in html
+
+
 def test_notifications_page_lists_received_notifications_with_post_links():
     client = TestClient(app)
     notification_broker.clear()
