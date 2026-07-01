@@ -61,6 +61,8 @@ def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
     chain_path = tmp_path / "audit_chain.json"
     blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
     monkeypatch.setattr(main, "audit_blockchain", blockchain) # sostituisce l'istanza di AuditBlockchain nel modulo main con quella creata per il test
+    # disabilita il client di audit per il test per evitare chiamate esterne a validator remoto
+    monkeypatch.setattr(main, "audit_client", SimpleNamespace(enabled=False)) # disabilita
 
     app = FastAPI()
     app.add_middleware(main.CurrentUserMiddleware) # aggiunge il middleware CurrentUserMiddleware all'app FastAPI per intercettare le richieste
@@ -71,7 +73,7 @@ def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
     async def read_items(request: Request):
         return PlainTextResponse("ok")
 
-    client = TestClient(app) # crea un client di test per simulare richieste HTTP all'app FastAPI
+    client = TestClient(app) # crea un client di test per simulare richieste HTTP all'app FastAPI (service principale)
     response = client.get("/items") # get
 
     assert response.status_code == 200
