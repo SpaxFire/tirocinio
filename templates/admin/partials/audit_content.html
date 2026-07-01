@@ -1,3 +1,4 @@
+<div id="audit-content">
 <div class="w-full max-w-none bg-white rounded-xl shadow p-6 space-y-4">
     <div class="flex items-center justify-between">
         <div>
@@ -9,7 +10,7 @@
         </div>
     </div>
 
-    <form class="grid gap-3 md:grid-cols-4" method="get" action="/admin/audit" hx-get="/admin/audit" hx-target="#audit-content" hx-swap="innerHTML" hx-push-url="true" hx-boost="false">
+    <form class="grid gap-3 md:grid-cols-4" method="get" action="/admin/audit" hx-get="/admin/audit" hx-target="#audit-content" hx-swap="outerHTML" hx-push-url="true" hx-boost="false">
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Utente</label>
             <input type="text" name="user" value="{{ active_filters.user or '' }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="es. alice" />
@@ -28,7 +29,7 @@
         </div>
         <div class="md:col-span-4 flex items-center gap-2">
             <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">Filtra</button>
-            <a href="/admin/audit" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700" hx-get="/admin/audit" hx-target="#audit-content" hx-swap="innerHTML" hx-push-url="true" hx-boost="false">Reset</a>
+            <a href="/admin/audit" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700" hx-get="/admin/audit" hx-target="#audit-content" hx-swap="outerHTML" hx-push-url="true" hx-boost="false">Reset</a>
         </div>
     </form>
 
@@ -62,4 +63,5 @@
             </tbody>
         </table>
     </div>
+</div>
 </div>

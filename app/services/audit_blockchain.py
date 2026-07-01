@@ -28,7 +28,8 @@ class AuditBlockchain:
             chain = {"validator": "fastapi-poa-node", "chain": [genesis_block]}
             self._save_chain(chain)
             return chain
-
+        
+        # Carica la catena di audit da un file JSON e verifica la sua struttura.
         with self.chain_path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
 
@@ -56,9 +57,9 @@ class AuditBlockchain:
     # Firma un payload utilizzando HMAC con SHA-256.
     def _sign_payload(self, payload: dict[str, Any]) -> str:
         return hmac.new(
-            self.signing_secret.encode("utf-8"),
-            self._canonical_json(payload).encode("utf-8"),
-            hashlib.sha256,
+            self.signing_secret.encode("utf-8"),           # Chiave segreta per la firma
+            self._canonical_json(payload).encode("utf-8"), # Dati da firmare (payload in formato JSON canonico)
+            hashlib.sha256,                                # Algoritmo di hash da utilizzare per HMAC
         ).hexdigest()
     
     # Costruisce un blocco della blockchain di audit con i campi richiesti, calcola l'hash e la firma del blocco.
@@ -79,12 +80,12 @@ class AuditBlockchain:
             "validator": "fastapi-poa-node",
             "previous_hash": previous_hash,
         }
-        block["hash"] = self._hash_payload(block)
+        block["hash"] = self._hash_payload(block) # Calcola l'hash del blocco (che include hash del blocco precedente)
         block["signature"] = self._sign_payload({"hash": block["hash"], "validator": block["validator"]})
         return block
 
     # Crea una nuova transazione (blocco) nella blockchain di audit con il tipo di evento e il payload forniti.
-    def create_transaction(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+    def create_block(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         previous_hash = self.chain["chain"][-1]["hash"] if self.chain.get("chain") else "0"
         return self._build_block(
             index=len(self.chain["chain"]),
@@ -95,12 +96,12 @@ class AuditBlockchain:
 
     # Aggiunge un evento alla blockchain di audit, creando una nuova transazione e salvando la catena.
     def append_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
-        transaction = self.create_transaction(event_type, payload)
+        transaction = self.create_block(event_type, payload)
         self.chain["chain"].append(transaction)
         self._save_chain(self.chain)
         return transaction
 
-    # Valida una transazione della blockchain di audit.
+    # Valida una transazione della blockchain di audit controllando formato, hash e firma.
     def validate_transaction(self, transaction: dict[str, Any]) -> bool:
         required_fields = {"index", "timestamp", "event_type", "payload", "validator", "previous_hash", "hash", "signature"}
         if not required_fields.issubset(transaction.keys()):
@@ -133,6 +134,8 @@ class AuditBlockchain:
         start_time: str | None = None,
         end_time: str | None = None,
     ) -> list[dict[str, Any]]:
+        
+        # Funzione interna per analizzare una stringa di data/ora in un oggetto datetime con fuso orario UTC.
         def _parse_time(value: str | None):
             if not value:
                 return None
@@ -143,9 +146,11 @@ class AuditBlockchain:
                 return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
             except ValueError:
                 return None
-
+        
+        # Analizza le stringhe di data/ora di inizio e fine in oggetti datetime.
         start_dt = _parse_time(start_time)
         end_dt = _parse_time(end_time)
+        # Inizializza una lista per memorizzare i blocchi filtrati in base ai criteri forniti.
         filtered_blocks: list[dict[str, Any]] = []
 
         for block in self.chain.get("chain", []):
