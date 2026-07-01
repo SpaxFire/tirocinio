@@ -56,7 +56,7 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
         event_type = f"{request.method.lower()}_request" # tipo di evento basato sul metodo HTTP
         # Se il servizio di audit è abilitato, proviamo a inviare l'evento al validator remoto.
         # In caso di fallimento, l'evento finisce nella coda pendente e verrà ritentato.
-        # Se il servizio non è configurato, scriviamo direttamente nella blockchain locale.
+        # Se il servizio non è configurato, scriviamo direttamente nella coda locale.
         if audit_client.enabled:
             sent = await audit_client.append_event(event_type, audit_payload)
             if not sent:
@@ -76,7 +76,7 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
         else:
             audit_blockchain.append_event(event_type, audit_payload)
             logger.debug(
-                "[AUDIT] Validator non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — evento scritto in blockchain locale: %s %s",
+                "[AUDIT] Validator non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — evento scritto in coda locale: %s %s",
                 request.method,
                 request.url.path,
             )
@@ -134,7 +134,7 @@ async def startup_event() -> None:
         else:
             logger.warning("[AUDIT] Validator remoto configurato ma non raggiungibile all'avvio: %s", audit_client.validator_url)
     else:
-        logger.info("[AUDIT] Validator remoto non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — modalità blockchain locale")
+        logger.info("[AUDIT] Validator remoto non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — modalità coda locale")
     asyncio.create_task(_flush_pending_events()) # Task in background per inviare periodicamente gli eventi pendenti al validator remoto
 
 

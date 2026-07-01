@@ -102,7 +102,7 @@ Ogni nuovo terminale richiede la riattivazione dell'ambiente virtuale prima dei 
 
 Da questa versione puoi eseguire la validazione audit come servizio separato.
 
-L'avvio precedente con solo server web continua a funzionare: se `AUDIT_VALIDATOR_URL` non e impostata, il server usa automaticamente la blockchain locale come fallback.
+L'avvio precedente con solo server web continua a funzionare: se `AUDIT_VALIDATOR_URL` non e impostata, il server usa automaticamente la coda locale come fallback.
 
 ### Avvio in locale con 2 processi
 
