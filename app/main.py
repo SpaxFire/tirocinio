@@ -39,7 +39,7 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
 
         request.state.user = user
 
-        response = await call_next(request)
+        response = await call_next(request) # Chiama la route successiva e ottiene la risposta.
         
         # Nella stessa risposta il server ordina la cancellazione con response.delete_cookie
         if request.cookies.get("flash_message"):

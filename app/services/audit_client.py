@@ -45,7 +45,8 @@ class AuditServiceClient:
         except httpx.HTTPError as exc:
             logger.warning("[AUDIT] Connessione al validator fallita (%s): %s", endpoint, exc)
             return False
-
+    
+    # Funzione per verificare se il servizio di audit esterno è raggiungibile (chiamando l'endpoint di healthcheck)
     async def is_reachable(self) -> bool:
         if not self.enabled:
             return False
