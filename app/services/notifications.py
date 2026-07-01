@@ -7,6 +7,7 @@ from typing import Any
 class NotificationBroker:
     def __init__(self) -> None:
         self._subscribers: dict[str, asyncio.Queue[dict[str, Any]]] = {}
+        self._history: list[dict[str, Any]] = []
         self._lock = asyncio.Lock()
 
     async def subscribe(self) -> tuple[str, asyncio.Queue[dict[str, Any]]]:
@@ -26,10 +27,17 @@ class NotificationBroker:
             "payload": payload,
         }
         async with self._lock:
+            self._history.append(event)
             subscribers = list(self._subscribers.items())
 
         for _, queue in subscribers:
             await queue.put(event)
+
+    def get_history(self) -> list[dict[str, Any]]:
+        return list(self._history)
+
+    def clear(self) -> None:
+        self._history.clear()
 
     def build_post_created_html(self, payload: dict[str, Any]) -> str:
         author = html.escape(str(payload.get("author", "qualcuno")))
@@ -38,10 +46,12 @@ class NotificationBroker:
         if len(content) > 140:
             preview = f"{preview}..."
         return (
-            '<div class="msg-notification transition-all duration-300"'
-            'hx-on::load="setTimeout(() => event.target.remove(), 4000)">'
-            f'<div class="font-semibold text-slate-900">Nuovo post da {author}:</div>'
-            f'<div>{preview}</div>'
+
+            '<div class="msg-notification"'
+            'hx-on::load="setTimeout(() => event.target.remove(), 4000)"'
+            'hx-get="notifications" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">'
+            f'<div>Nuovo post da {author}:</div>'
+            f'<div class="text-sm text-slate-900">{preview}</div>'
             '</div>'
         )
 

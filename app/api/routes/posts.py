@@ -334,7 +334,7 @@ async def post_detail(
     request: Request,
     post_id: str,
     user: UserInDB | None = Depends(optional_current_user_cookie),
-    hx_request: Annotated[Union[str, None], Header()] = None,
+    hx_request: Annotated[Union[str, None], Header(alias="HX-Request")] = None,
 ):
     post = post_db.get_post_by_id(post_id, user.id if user else None)
 

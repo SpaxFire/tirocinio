@@ -58,6 +58,47 @@ def test_notifications_stream_endpoint_returns_sse_headers():
         app.dependency_overrides.clear()
 
 
+def test_notifications_page_lists_received_notifications_with_post_links():
+    client = TestClient(app)
+    notification_broker.clear()
+
+    def override_current_user():
+        return UserInDB(
+            id="user-1",
+            username="alice",
+            email="alice@example.com",
+            password_hash="hash",
+            role="USER",
+            bio=None,
+            profile_image=None,
+            created_at=None,
+            is_active=True,
+        )
+
+    app.dependency_overrides[get_current_active_user] = override_current_user
+    try:
+        asyncio.run(
+            notification_broker.publish(
+                {
+                    "type": "post_created",
+                    "author": "bob",
+                    "content": "Contenuto del post",
+                    "post_id": "post-123",
+                }
+            )
+        )
+
+        with patch("app.api.routes.notifications.user_db.is_following", return_value=True):
+            response = client.get("/notifications")
+
+        assert response.status_code == 200
+        assert "Vai al post" in response.text
+        assert "/posts/post-123" in response.text
+    finally:
+        app.dependency_overrides.clear()
+        notification_broker.clear()
+
+
 @pytest.mark.anyio
 async def test_notification_stream_filters_events_for_followed_users():
     subscriber_id, queue = await notification_broker.subscribe()
