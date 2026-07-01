@@ -1,10 +1,13 @@
 import asyncio
 import json
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.core.security import get_current_active_user
+from app.schemas.user import UserInDB
 from app.services.mqtt_client import mqtt_notification_client
 from app.services.notifications import NotificationBroker, notification_broker
 
@@ -33,9 +36,41 @@ async def test_notification_broker_delivers_payload_to_subscribers():
 def test_notifications_stream_endpoint_returns_sse_headers():
     client = TestClient(app)
 
-    with client.stream("GET", "/notifications/stream") as response:
-        assert response.status_code == 200
-        assert "text/event-stream" in response.headers["content-type"]
+    def override_current_user():
+        return UserInDB(
+            id="user-1",
+            username="alice",
+            email="alice@example.com",
+            password_hash="hash",
+            role="USER",
+            bio=None,
+            profile_image=None,
+            created_at=None,
+            is_active=True,
+        )
+
+    app.dependency_overrides[get_current_active_user] = override_current_user
+    try:
+        with client.stream("GET", "/notifications/stream") as response:
+            assert response.status_code == 200
+            assert "text/event-stream" in response.headers["content-type"]
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.anyio
+async def test_notification_stream_filters_events_for_followed_users():
+    subscriber_id, queue = await notification_broker.subscribe()
+
+    try:
+        with patch("app.api.routes.notifications.user_db.is_following", return_value=True):
+            await notification_broker.publish(
+                {"type": "post_created", "author": "bob", "content": "post visibile"}
+            )
+            event = await asyncio.wait_for(queue.get(), timeout=1)
+            assert event["payload"]["content"] == "post visibile"
+    finally:
+        await notification_broker.unsubscribe(subscriber_id)
 
 
 @pytest.mark.anyio
