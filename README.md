@@ -102,17 +102,17 @@ Ogni nuovo terminale richiede la riattivazione dell'ambiente virtuale prima dei 
 
 Da questa versione puoi eseguire la validazione audit come servizio separato.
 
+L'avvio precedente con solo server web continua a funzionare: se `AUDIT_VALIDATOR_URL` non e impostata, il server usa automaticamente la blockchain locale come fallback.
+
 ### Avvio in locale con 2 processi
 
-Terminale 1 (validator):
+Terminale A (validator):
 
-	source .venv/bin/activate
-	uvicorn app.validator_main:validator_app --host 0.0.0.0 --port 8001 --reload
+	. .venv/bin/activate
+	python -m uvicorn app.validator_main:validator_app --host 127.0.0.1 --port 8001 --reload
 
-Terminale 2 (server web):
+Terminale B (server web):
 
-	source .venv/bin/activate
+	. .venv/bin/activate
 	export AUDIT_VALIDATOR_URL=http://127.0.0.1:8001
-	fastapi dev app/main.py
-
-Se `AUDIT_VALIDATOR_URL` non e impostata, il server usa automaticamente la blockchain locale come fallback.
+	python -m fastapi dev app/main.py
