@@ -4,6 +4,7 @@ import logging
 import os
 from typing import Any
 
+from app.services.mqtt_subscriber import mqtt_subscriber_service
 from app.services.notifications import notification_broker
 
 try:
@@ -27,6 +28,7 @@ class MqttNotificationClient:
 
     def attach_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
+        mqtt_subscriber_service.attach_loop(loop)
 
     def start(self) -> bool:
         if mqtt is None:
@@ -40,7 +42,7 @@ class MqttNotificationClient:
             client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
             client.on_connect = self._on_connect
             client.on_disconnect = self._on_disconnect
-            client.on_message = self._on_message
+            client.on_message = mqtt_subscriber_service._on_message
 
             if self._username and self._password:
                 client.username_pw_set(self._username, self._password)
@@ -83,16 +85,7 @@ class MqttNotificationClient:
         self._connected = False
 
     def _on_message(self, client, userdata, message) -> None:
-        topic = message.topic
-        try:
-            payload = json.loads(message.payload.decode("utf-8"))
-        except Exception:
-            payload = {"data": message.payload.decode("utf-8", errors="ignore")}
-
-        if self._loop is not None and self._loop.is_running():
-            self._loop.call_soon_threadsafe(
-                lambda: asyncio.create_task(notification_broker.publish(payload, topic=topic))
-            )
+        mqtt_subscriber_service._on_message(client, userdata, message)
 
 
 mqtt_notification_client = MqttNotificationClient()

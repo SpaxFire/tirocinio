@@ -66,7 +66,7 @@ async def notifications_stream(
                 if await request.is_disconnected():
                     break
 
-                event = await asyncio.wait_for(queue.get(), timeout=30)
+                event = await asyncio.wait_for(queue.get(), timeout=None)
                 payload = event.get("payload", {})
 
                 if payload.get("type") == "post_created":

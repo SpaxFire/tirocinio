@@ -1,6 +1,6 @@
 import asyncio
 import json
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,6 +9,7 @@ from app.main import app
 from app.core.security import get_current_active_user
 from app.schemas.user import UserInDB
 from app.services.mqtt_client import mqtt_notification_client
+from app.services.mqtt_subscriber import MqttSubscriberService
 from app.services.notifications import NotificationBroker, notification_broker
 
 
@@ -149,8 +150,26 @@ async def test_notification_stream_filters_events_for_followed_users():
 
 
 @pytest.mark.anyio
-async def test_mqtt_publish_does_not_duplicate_when_client_is_connected():
+async def test_mqtt_subscriber_service_forwards_inbound_messages_to_notification_broker():
+    subscriber_service = MqttSubscriberService()
+    subscriber_service._loop = asyncio.get_running_loop()
     subscriber_id, queue = await notification_broker.subscribe()
+
+    with patch("app.services.mqtt_subscriber.notification_broker.publish", new_callable=AsyncMock) as publish_mock:
+        subscriber_service._on_message(
+            None,
+            None,
+            type(
+                "Msg",
+                (),
+                {"topic": "posts.created", "payload": json.dumps({"type": "post_created", "content": "hello"}).encode("utf-8")},
+            )(),
+        )
+        await asyncio.sleep(0.01)
+
+        publish_mock.assert_awaited_once()
+        assert publish_mock.await_args.args[0]["content"] == "hello"
+
     original_client = mqtt_notification_client._client
     original_connected = mqtt_notification_client._connected
     original_loop = mqtt_notification_client._loop
@@ -170,7 +189,15 @@ async def test_mqtt_publish_does_not_duplicate_when_client_is_connected():
     try:
         payload = {"type": "post_created", "content": "solo una notifica"}
         mqtt_notification_client.publish(payload)
-        mqtt_notification_client._on_message(None, None, type("Msg", (), {"topic": "posts.created", "payload": json.dumps(payload).encode("utf-8")})())
+        mqtt_notification_client._on_message(
+            None,
+            None,
+            type(
+                "Msg",
+                (),
+                {"topic": "posts.created", "payload": json.dumps(payload).encode("utf-8")},
+            )(),
+        )
 
         event = await asyncio.wait_for(queue.get(), timeout=1)
         assert event["payload"]["content"] == "solo una notifica"
