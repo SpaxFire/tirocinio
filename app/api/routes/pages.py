@@ -10,19 +10,9 @@ from app.db import comment as comment_db
 from app.services.audit_client import AuditServiceClient
 from urllib.parse import urlencode
 
-# Inizializza il router e la variabile globale per la blockchain di audit
+# Inizializza il router e il client verso il validatore audit
 router = APIRouter(tags=["pages"])
-audit_blockchain = None
 audit_client = AuditServiceClient()
-
-# Funzione Helper di "/admin/audit" per ottenere la blockchain di audit dal modulo principale (app/main.py)
-def _get_audit_blockchain():
-    global audit_blockchain
-    if audit_blockchain is None:
-        from app.main import audit_blockchain as main_audit_blockchain
-
-        audit_blockchain = main_audit_blockchain
-    return audit_blockchain
 
 # Risponde alle richieste GET per la home page
 @router.get("/", response_class=HTMLResponse)
@@ -268,28 +258,6 @@ async def admin_audit_page(
         if remote_view:
             chain = remote_view.get("chain", {"chain": []})
             is_valid = bool(remote_view.get("is_valid", False))
-        else:
-            blockchain = _get_audit_blockchain()
-            current_chain = getattr(blockchain, "chain", {"chain": []})
-            filtered_chain = blockchain.filter_chain(
-                user=user,
-                event_type=event_type,
-                start_time=start_time,
-                end_time=end_time,
-            )
-            chain = {**current_chain, "chain": filtered_chain}
-            is_valid = blockchain.validate_chain()
-    else:
-        blockchain = _get_audit_blockchain()
-        current_chain = getattr(blockchain, "chain", {"chain": []})
-        filtered_chain = blockchain.filter_chain(
-            user=user,
-            event_type=event_type,
-            start_time=start_time,
-            end_time=end_time,
-        )
-        chain = {**current_chain, "chain": filtered_chain}
-        is_valid = blockchain.validate_chain()
 
     context = {
         "request": request,

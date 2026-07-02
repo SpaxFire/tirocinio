@@ -12686,6 +12686,790 @@
       "previous_hash": "03535104881042a555e966e249e83e5b0effec3a01228691b953e42b0d7cd177",
       "hash": "9b22671d4c671b529b4e75e5b68735eb78f0fda449514bd80353e50da0f617eb",
       "signature": "b4d6ff88d683c9cdec295daecbdd722645ed0a0e8345590c73604f310af22b88"
+    },
+    {
+      "index": 755,
+      "timestamp": "2026-07-02T09:04:17.915469+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "9b22671d4c671b529b4e75e5b68735eb78f0fda449514bd80353e50da0f617eb",
+      "hash": "7997112c720b6395cb9a3e6243662c27e9e5a2b00b66678f1149dc2c428203de",
+      "signature": "d77a2160c499b1ced41104aa717b2a03cdf00c7ec546f2466583c94f78789e72"
+    },
+    {
+      "index": 756,
+      "timestamp": "2026-07-02T09:04:17.963039+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/create-box",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "7997112c720b6395cb9a3e6243662c27e9e5a2b00b66678f1149dc2c428203de",
+      "hash": "e9e250546375ac104546e9d19682e46db7aabe7de7af74815bc8d134bacd58e9",
+      "signature": "5dc2f388e6db6c540522df32967b5830726088ae14c612683d434f0d2dc4f82e"
+    },
+    {
+      "index": 757,
+      "timestamp": "2026-07-02T09:04:18.000045+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/feed",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "e9e250546375ac104546e9d19682e46db7aabe7de7af74815bc8d134bacd58e9",
+      "hash": "7e44f7cfe5468ef56656508475509a1f1f3feb4384c7c46b9806d8b05f8d6034",
+      "signature": "1ba2e613a2c2a4593b589a7f07d3307236fc6cb2ae6f530c91847868c1de97af"
+    },
+    {
+      "index": 758,
+      "timestamp": "2026-07-02T09:04:18.025492+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "7e44f7cfe5468ef56656508475509a1f1f3feb4384c7c46b9806d8b05f8d6034",
+      "hash": "4859868e0c6d2559332d6a817c0dd20aa5f56fc3d2ae84404d53d58428566d09",
+      "signature": "83ef998858e92d10037c026987968f1efd1951787acbbb30660a18a26c9fdca0"
+    },
+    {
+      "index": 759,
+      "timestamp": "2026-07-02T09:04:18.058171+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/favicon.ico",
+        "status_code": 404,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "4859868e0c6d2559332d6a817c0dd20aa5f56fc3d2ae84404d53d58428566d09",
+      "hash": "dcb2a0ac5f0c99a114ea8b48eff6ea669aef4d431b7dac278e4256ac6b45e9d3",
+      "signature": "e00d83ee8548756654f1d7d32566d545307cdeb170d1bc823332f4683720eff8"
+    },
+    {
+      "index": 760,
+      "timestamp": "2026-07-02T09:04:18.085856+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "dcb2a0ac5f0c99a114ea8b48eff6ea669aef4d431b7dac278e4256ac6b45e9d3",
+      "hash": "6dc5abeac5c03b5adc9352bba1829142a9af0f98f232ce38730fbaac3bf3af45",
+      "signature": "cfad9753168d6d9ec2ff1c5580cd14970f2abff40220afce587cbcabc8dca495"
+    },
+    {
+      "index": 761,
+      "timestamp": "2026-07-02T09:04:18.110154+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/670b3b82-a25c-4271-9777-124b0741669c/comments",
+        "status_code": 200,
+        "user": null,
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "6dc5abeac5c03b5adc9352bba1829142a9af0f98f232ce38730fbaac3bf3af45",
+      "hash": "77cc6c7aec431dc9bc00f54153b9092cfa097acec1fb7a0243344d05963e8731",
+      "signature": "072d41ec2c909b9e25fe8e827108f3e8ce908d0cac49250d55271e441c01a2ab"
+    },
+    {
+      "index": 762,
+      "timestamp": "2026-07-02T09:04:18.136779+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/08bb1832-5cb5-4459-b4b4-74b866eed1e3/comments",
+        "status_code": 200,
+        "user": null,
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "77cc6c7aec431dc9bc00f54153b9092cfa097acec1fb7a0243344d05963e8731",
+      "hash": "c4a6c286ca6b47c584a649506d48ea4a29d0b8e03ae9c74881680e565865bf4c",
+      "signature": "c1a0cab86f7532edfb044f788849c6d20cfe5268f47e62b6006a5625ff7d6a65"
+    },
+    {
+      "index": 763,
+      "timestamp": "2026-07-02T09:04:18.164429+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/login/modal",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "c4a6c286ca6b47c584a649506d48ea4a29d0b8e03ae9c74881680e565865bf4c",
+      "hash": "2f450c543fc1389e997563e31f38f9f8b1268dada56e81d4d614f2457cdb4e39",
+      "signature": "1c789b7fa46a47d16e3747dbdde84ebb4c401342a75b297963edd0dd802475f3"
+    },
+    {
+      "index": 764,
+      "timestamp": "2026-07-02T09:04:18.193216+00:00",
+      "event_type": "post_request",
+      "payload": {
+        "method": "POST",
+        "path": "/login",
+        "status_code": 204,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "2f450c543fc1389e997563e31f38f9f8b1268dada56e81d4d614f2457cdb4e39",
+      "hash": "d347c45283bcb7e519ccb4e51dcc9650c486fae3c0be151fc123babc27c1ba00",
+      "signature": "77381c3b9b3add96acb31d07b8d1d7e38f66cc55fc0b9ef69ce849768aee38db"
+    },
+    {
+      "index": 765,
+      "timestamp": "2026-07-02T09:04:18.223116+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "d347c45283bcb7e519ccb4e51dcc9650c486fae3c0be151fc123babc27c1ba00",
+      "hash": "7bc05d06462bb1bfa0fccff0ad1abffdd7e5a47bb49e154858145f91ea797286",
+      "signature": "cc19e432265660414d30256d0df9bcc8af252ae3cbc66c56f4822d39805445ba"
+    },
+    {
+      "index": 766,
+      "timestamp": "2026-07-02T09:04:18.244739+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/create-box",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "7bc05d06462bb1bfa0fccff0ad1abffdd7e5a47bb49e154858145f91ea797286",
+      "hash": "0eac91247424192f8d09a33deec860c4a98a435298a28a893a5e437d6ad9b412",
+      "signature": "2d16aa0c5cb2de6791cb56d6c7c8af65ebce9f32e4e8a226d271440e9209af45"
+    },
+    {
+      "index": 767,
+      "timestamp": "2026-07-02T09:04:18.274497+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/feed",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "0eac91247424192f8d09a33deec860c4a98a435298a28a893a5e437d6ad9b412",
+      "hash": "0388b42a52229e2b23cf056119f1943caf9f8f1e858addf0f4426f2c25e1e694",
+      "signature": "2544936ae3649c674cd285c9fa74037ff23bddba3b6c2b26c17d7d7ea9b85beb"
+    },
+    {
+      "index": 768,
+      "timestamp": "2026-07-02T09:04:18.309932+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "0388b42a52229e2b23cf056119f1943caf9f8f1e858addf0f4426f2c25e1e694",
+      "hash": "930b23156857f61cb2d502c8e3732086b67c1f6453913803675e20a6f02bccd6",
+      "signature": "b3ed9633cead9a9d521b317950df9b0d2381693da0097bf0c5c87812156815fc"
+    },
+    {
+      "index": 769,
+      "timestamp": "2026-07-02T09:04:18.341222+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/670b3b82-a25c-4271-9777-124b0741669c/comments",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "930b23156857f61cb2d502c8e3732086b67c1f6453913803675e20a6f02bccd6",
+      "hash": "b800d98de6830b92996cac9f0f019efea068e5550cd72da6bd46f470a92ab6cc",
+      "signature": "932513ec6132632e1f1ea50f01d857caab2a047f0de26b1a78d1f5663c65b23e"
+    },
+    {
+      "index": 770,
+      "timestamp": "2026-07-02T09:04:18.369030+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/08bb1832-5cb5-4459-b4b4-74b866eed1e3/comments",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "b800d98de6830b92996cac9f0f019efea068e5550cd72da6bd46f470a92ab6cc",
+      "hash": "91aceeae10fa6f61a7ccfa6fffdd4f278935c9288f75505dea181716c6a6bac0",
+      "signature": "95a724c88b49cbbb66bfcca8dc800e7ead35cf7871a29f6b3831902fdc0058e4"
+    },
+    {
+      "index": 771,
+      "timestamp": "2026-07-02T09:04:18.393077+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "91aceeae10fa6f61a7ccfa6fffdd4f278935c9288f75505dea181716c6a6bac0",
+      "hash": "cec9c1a420491e9f0da6682dc4f2cbe0ecdcf672600cfd551c1c0cd147e0af8f",
+      "signature": "250c29af3098ae9f481d69f4a6c7ca69cf89d8e1692898cefdceb6562bcc8a8c"
+    },
+    {
+      "index": 772,
+      "timestamp": "2026-07-02T09:04:18.417344+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/admin/audit",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "cec9c1a420491e9f0da6682dc4f2cbe0ecdcf672600cfd551c1c0cd147e0af8f",
+      "hash": "4a9a5f1ac16001c5c536006211827bb67aa32323cb1557f1a1082291958bbb7d",
+      "signature": "81f27390bec78142978138252955915c81a5c0840474106286f7499a990ee93d"
+    },
+    {
+      "index": 773,
+      "timestamp": "2026-07-02T09:04:18.442970+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/admin/audit",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "4a9a5f1ac16001c5c536006211827bb67aa32323cb1557f1a1082291958bbb7d",
+      "hash": "cce64d58cec269e85d5bb8eb015c6ed901249378612a6fd65743e5ce0c37a5f0",
+      "signature": "773df19148652b40842d6d89f146668bceee3b7d2d2bb286d2e0d9bdf7d22fcd"
+    },
+    {
+      "index": 774,
+      "timestamp": "2026-07-02T09:04:18.467621+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "cce64d58cec269e85d5bb8eb015c6ed901249378612a6fd65743e5ce0c37a5f0",
+      "hash": "093416dbbce54fb95f29d48cede2b4be0994f45928e68aac298653cd7ff77569",
+      "signature": "cfab81da9c88ff74b305ad2f1b6c07728df0b6e8c6b36548c26b36b98877dec8"
+    },
+    {
+      "index": 775,
+      "timestamp": "2026-07-02T09:04:18.492706+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "093416dbbce54fb95f29d48cede2b4be0994f45928e68aac298653cd7ff77569",
+      "hash": "671b4368aecd3833a3454844f87e3f60cf60201f5e18f098b64db543059eda68",
+      "signature": "54373adc36c489164a01c971d537058cac0e1bf7528f63b822460c7beffbd71d"
+    },
+    {
+      "index": 776,
+      "timestamp": "2026-07-02T09:04:18.517588+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/admin/audit",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "671b4368aecd3833a3454844f87e3f60cf60201f5e18f098b64db543059eda68",
+      "hash": "b3d919a4bb52b2a4a57451ee037dbd8a29ba7135d7b0f2982698e2316ff1d2f0",
+      "signature": "5a1a647e41dce3a736d776eb3ae495cf0aba355b496d4d623e18ba01dccf273b"
+    },
+    {
+      "index": 777,
+      "timestamp": "2026-07-02T09:04:18.544097+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "b3d919a4bb52b2a4a57451ee037dbd8a29ba7135d7b0f2982698e2316ff1d2f0",
+      "hash": "03a0fc9fa838c0e073869a8db96d18462ac8ea654e72ca2cacc7c9cb6afeae3c",
+      "signature": "5f468a0054e00980811566b0bffa5c76490e09466c52ed6ce1dd8db41ccc38f7"
+    },
+    {
+      "index": 778,
+      "timestamp": "2026-07-02T09:04:18.571582+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "03a0fc9fa838c0e073869a8db96d18462ac8ea654e72ca2cacc7c9cb6afeae3c",
+      "hash": "890eb1d77630439601d28187fdeb644893ebfa841f10df4473caa7ae2c4ef477",
+      "signature": "65ed11dd139034df5e699ffbaf48f582f13d8268af59264019dd69e0b9a46ba7"
+    },
+    {
+      "index": 779,
+      "timestamp": "2026-07-02T09:04:24.056187+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/admin/audit",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "890eb1d77630439601d28187fdeb644893ebfa841f10df4473caa7ae2c4ef477",
+      "hash": "2631b255bc84ecf8f5b8a97aa9c5d0fcc49403dd71e680d0c897a02c0043b74d",
+      "signature": "33a37cc8227e2aea556f1ecf58902bb0e7e622bf797f5e26a3ce77326dedbb0d"
+    },
+    {
+      "index": 780,
+      "timestamp": "2026-07-02T09:04:24.478720+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "2631b255bc84ecf8f5b8a97aa9c5d0fcc49403dd71e680d0c897a02c0043b74d",
+      "hash": "199c00e7a23f7550b59e1a716321ef992d8041da4b7497ef4c3f9e5695cc4a00",
+      "signature": "f4372116e676ab7ded0d28e10bab421b756509bafd6ecc5193811d268eb52094"
+    },
+    {
+      "index": 781,
+      "timestamp": "2026-07-02T09:04:24.734339+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "199c00e7a23f7550b59e1a716321ef992d8041da4b7497ef4c3f9e5695cc4a00",
+      "hash": "507f67c9185831a6a404f0889d6b6b2572e73a42314737ac2e1ff0fad93be343",
+      "signature": "948e864891d5470ca3e16f84f6d386b45430c45fb8041a90c81de192eaeabacf"
+    },
+    {
+      "index": 782,
+      "timestamp": "2026-07-02T09:23:53.375186+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/admin/audit",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "507f67c9185831a6a404f0889d6b6b2572e73a42314737ac2e1ff0fad93be343",
+      "hash": "97299953e01ca640cfe005beee7a2a6dc7eb4694421309f3acd42676de00261f",
+      "signature": "11fc1d2d67c0ffc1cc138282ed51e3e5192a0a8f11f198e8e94a83fc6c334c30"
+    },
+    {
+      "index": 783,
+      "timestamp": "2026-07-02T09:23:53.731505+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "97299953e01ca640cfe005beee7a2a6dc7eb4694421309f3acd42676de00261f",
+      "hash": "fdc7a065e37d592aa4db32589d8b302c24f16018f2b070ee675a879c05e17fc0",
+      "signature": "9a96d628726aceed0bc3e0066477abd054ccc1f99433356772aae94e73a4ea71"
+    },
+    {
+      "index": 784,
+      "timestamp": "2026-07-02T09:23:53.840564+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "fdc7a065e37d592aa4db32589d8b302c24f16018f2b070ee675a879c05e17fc0",
+      "hash": "6b7d8fd7bad74e61b36945a7657090f38e36f356543bb2330ae99ef9512408d6",
+      "signature": "988134bc0214d9b2680cd3a8fe7dab915cdc8fdd6399a0b0dfb154da2f8601f4"
+    },
+    {
+      "index": 785,
+      "timestamp": "2026-07-02T09:23:58.724161+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "6b7d8fd7bad74e61b36945a7657090f38e36f356543bb2330ae99ef9512408d6",
+      "hash": "2cf130e6669506e533b72e664f646075f78dd42b95299cbb7a8565c3968c84c7",
+      "signature": "4591b5196ce936348691f78ebe5fe2c46c2238536148eb3bfbe5d8bd9780fccf"
+    },
+    {
+      "index": 786,
+      "timestamp": "2026-07-02T09:23:58.746927+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/create-box",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "2cf130e6669506e533b72e664f646075f78dd42b95299cbb7a8565c3968c84c7",
+      "hash": "4b5a252d44c0e45434f62fbf44dc6a2496d5fdffcbb89aa07a39acebe54fdb24",
+      "signature": "fd37fd5aa718d2355b289d7677a32dcc88958db4fec30525e49f9337395481cf"
+    },
+    {
+      "index": 787,
+      "timestamp": "2026-07-02T09:23:58.774463+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/feed",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "4b5a252d44c0e45434f62fbf44dc6a2496d5fdffcbb89aa07a39acebe54fdb24",
+      "hash": "57c37814ebaaaff5df321651e12d87367c8df950b16c82f80dfc98523e900d30",
+      "signature": "16034f754284c652f2bf6b749e0ad98ab659badba7f412d7c81668a3baaed6ff"
+    },
+    {
+      "index": 788,
+      "timestamp": "2026-07-02T09:23:58.805910+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "57c37814ebaaaff5df321651e12d87367c8df950b16c82f80dfc98523e900d30",
+      "hash": "8b2f4c81e1f3b43e5bc46383150ec20046765c23234b85d8220dce95751c5d9d",
+      "signature": "584fceaa3854799a21787b31d6faca0d8692dd9eebd749ee47c1b2557e918dbe"
+    },
+    {
+      "index": 789,
+      "timestamp": "2026-07-02T09:23:58.836528+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/favicon.ico",
+        "status_code": 404,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "8b2f4c81e1f3b43e5bc46383150ec20046765c23234b85d8220dce95751c5d9d",
+      "hash": "fa53a792235be98ce6d7f5b6cef7a655249a4349245f2b1a35507a5b0f62b373",
+      "signature": "8d3d726d0b1f8de3648e574889d023fdf7099f51020c1e4826229888a56b735c"
+    },
+    {
+      "index": 790,
+      "timestamp": "2026-07-02T09:23:58.871539+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "fa53a792235be98ce6d7f5b6cef7a655249a4349245f2b1a35507a5b0f62b373",
+      "hash": "9e71af8690bbee7d8dd4b55e15ec0a53344278552eb661abc125519d9eb38b7d",
+      "signature": "6906bae9fcf49d1c699c4bfbaf5c1dde68f519d37d38448e2260e0a59a583f08"
+    },
+    {
+      "index": 791,
+      "timestamp": "2026-07-02T09:23:58.900346+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/670b3b82-a25c-4271-9777-124b0741669c/comments",
+        "status_code": 200,
+        "user": null,
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "9e71af8690bbee7d8dd4b55e15ec0a53344278552eb661abc125519d9eb38b7d",
+      "hash": "ff10d4579fba7b4fac5f8a52bf4e0af8a139113932f36786af6501a2d0feaa33",
+      "signature": "a6ba84e402346d5168ef421ec9803b0be7dcb6cbdf99c1abd9add81a7670d6b6"
+    },
+    {
+      "index": 792,
+      "timestamp": "2026-07-02T09:23:58.929239+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/08bb1832-5cb5-4459-b4b4-74b866eed1e3/comments",
+        "status_code": 200,
+        "user": null,
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "ff10d4579fba7b4fac5f8a52bf4e0af8a139113932f36786af6501a2d0feaa33",
+      "hash": "00747809a8da6cdeec341effc718a0a1a6e8758d9b10b1e10bff3b9605255216",
+      "signature": "fdf95f169bbbc5153e8aebacf7dbe7bfee3def77db90b178d983ca28cda58298"
+    },
+    {
+      "index": 793,
+      "timestamp": "2026-07-02T09:23:58.963475+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/login/modal",
+        "status_code": 200,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "00747809a8da6cdeec341effc718a0a1a6e8758d9b10b1e10bff3b9605255216",
+      "hash": "2ae47ba6804b8079caf34bdd3bf22882aec6125fc93219848b6712c17a8675f0",
+      "signature": "efaa1bd5dc0d2bdb65d81f6af02b7d6affd5e58be1a83ea802b94f0e3cd37662"
+    },
+    {
+      "index": 794,
+      "timestamp": "2026-07-02T09:23:58.990389+00:00",
+      "event_type": "post_request",
+      "payload": {
+        "method": "POST",
+        "path": "/login",
+        "status_code": 204,
+        "user": null,
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "2ae47ba6804b8079caf34bdd3bf22882aec6125fc93219848b6712c17a8675f0",
+      "hash": "7716c109e423d653bb7db2c5992e158acef966b46370b9d4b5fac5b87e728d58",
+      "signature": "603f8c0af1a25ed4bcffac24fb64f8a200e4f082b1246bb9b559dfcf3000033a"
+    },
+    {
+      "index": 795,
+      "timestamp": "2026-07-02T09:23:59.017661+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "7716c109e423d653bb7db2c5992e158acef966b46370b9d4b5fac5b87e728d58",
+      "hash": "de20371d4f167d35b4b823af6f717b7976980e4b50474eae5a86ef325de3d79e",
+      "signature": "bbaa8cae651c39b1d83ba1d4086a269268dbbdb9dd55f7f86fdf891180604f97"
+    },
+    {
+      "index": 796,
+      "timestamp": "2026-07-02T09:23:59.042233+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/create-box",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "de20371d4f167d35b4b823af6f717b7976980e4b50474eae5a86ef325de3d79e",
+      "hash": "cc97d81b86042f1935ea8791cb7a4911c9fff9654c2886733902f001b1c6abaa",
+      "signature": "8fb66195d4024f4ef10771bd58712b400b58e11e5f2fadb226e3a73d9a6a77e5"
+    },
+    {
+      "index": 797,
+      "timestamp": "2026-07-02T09:23:59.068746+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/feed",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "cc97d81b86042f1935ea8791cb7a4911c9fff9654c2886733902f001b1c6abaa",
+      "hash": "fb2a14e694e275b7e9a35a24a40248aaff05c4a7609b8995b9726e184d63550f",
+      "signature": "c670ef82165a1ada58a0b591cfd6269ec8ce33a307df566e35edba482a9b7805"
+    },
+    {
+      "index": 798,
+      "timestamp": "2026-07-02T09:23:59.099153+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/auth/user-widget",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "fb2a14e694e275b7e9a35a24a40248aaff05c4a7609b8995b9726e184d63550f",
+      "hash": "35f7e989c0fc3758e94657a9cdc7b6088ad0a16a82b00f7d8531f5fad9f3ee4d",
+      "signature": "e398e534fc68794e8eaa265e5378b3be9073c1410b00361379f9287937b3f446"
+    },
+    {
+      "index": 799,
+      "timestamp": "2026-07-02T09:23:59.132393+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/670b3b82-a25c-4271-9777-124b0741669c/comments",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "35f7e989c0fc3758e94657a9cdc7b6088ad0a16a82b00f7d8531f5fad9f3ee4d",
+      "hash": "d2cbae212f6615091500dfa84a339ac2de502f1609ea1fec1d05cca2e15f8a5d",
+      "signature": "109d5fa2d79f080a5f435d853e4fae0857a24cd2594440db665472dc39261429"
+    },
+    {
+      "index": 800,
+      "timestamp": "2026-07-02T09:23:59.163449+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/sidebar/right",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "d2cbae212f6615091500dfa84a339ac2de502f1609ea1fec1d05cca2e15f8a5d",
+      "hash": "380b67df5878f5820ee3398b7edd2bd056ae5b2e5a75c5d17b35493f827ab200",
+      "signature": "445a5144f9ba657180472db106df3fdaa0cc2fe37b927b67139f3331655bf9aa"
+    },
+    {
+      "index": 801,
+      "timestamp": "2026-07-02T09:23:59.191804+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/posts/08bb1832-5cb5-4459-b4b4-74b866eed1e3/comments",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {
+          "source": "feed"
+        }
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "380b67df5878f5820ee3398b7edd2bd056ae5b2e5a75c5d17b35493f827ab200",
+      "hash": "8fd33055c075fe6a698b2ad5a98e5f9907e6680bb4012b6f65a98e1d188fcf76",
+      "signature": "fb942cd5a253012cca0f428f354286eaa484deacbdb26993f38ab2aeebbec126"
+    },
+    {
+      "index": 802,
+      "timestamp": "2026-07-02T09:23:59.224282+00:00",
+      "event_type": "get_request",
+      "payload": {
+        "method": "GET",
+        "path": "/admin/audit",
+        "status_code": 200,
+        "user": "admin",
+        "query_params": {}
+      },
+      "validator": "fastapi-poa-node",
+      "previous_hash": "8fd33055c075fe6a698b2ad5a98e5f9907e6680bb4012b6f65a98e1d188fcf76",
+      "hash": "cab496084c9a74076777e1f1f366ad077d9da7993cfaddf79828d6e4af2154e0",
+      "signature": "c9d454120f15f327ff54d0946f5e2dbcb5bf5bd919ed02d95ac2fcc62c300814"
     }
   ]
 }
