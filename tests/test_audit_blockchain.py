@@ -68,6 +68,7 @@ def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
     pending = PendingAuditQueue(queue_path=tmp_path / "pending.json")
     monkeypatch.setattr(main, "audit_blockchain", blockchain) # sostituisce l'istanza di AuditBlockchain nel modulo main con quella creata per il test
     monkeypatch.setattr(main, "pending_queue", pending)
+    
     # disabilita il client di audit per il test per evitare chiamate esterne a validator remoto
     monkeypatch.setattr(main, "audit_client", SimpleNamespace(enabled=False)) # disabilita
 
@@ -146,7 +147,6 @@ def test_validator_receives_transaction_and_creates_block(tmp_path):
 
 # Test che il validatore rifiuta transazioni con firma non valida
 def test_validator_rejects_invalid_transaction(tmp_path):
-    """Test che il validatore rifiuta transazioni con firma tamperata."""
     chain_path = tmp_path / "audit_chain.json"
     blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
     audit_validator.audit_blockchain = blockchain
@@ -253,7 +253,7 @@ def test_admin_audit_page_returns_partial_content_for_htmx(tmp_path):
             "http_version": "1.1",
         }
     )
-    # Verifica che la risposta contenga solo il contenuto parziale della pagina di audit per richieste HTMX.
+    # Mando una richiesta HTMX come utente amministratore
     response = asyncio.run(
         pages_route.admin_audit_page(
             request=request,
