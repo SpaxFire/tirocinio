@@ -10,9 +10,27 @@ from typing import Any
 class AuditBlockchain:
 
     # Inizializza la classe AuditBlockchain con il percorso della catena e il segreto di firma.
-    def __init__(self, chain_path: str | Path | None = None, signing_secret: str | None = None):
+    def __init__(
+        self,
+        chain_path: str | Path | None = None,
+        signing_secret: str | None = None,             # Segreto di firma legacy (stesso per validatore e server)
+        transaction_signing_secret: str | None = None, # Segreto di firma per le transazioni (server)
+        block_signing_secret: str | None = None,       # Segreto di firma per i blocchi (validatore)
+    ):
         self.chain_path = Path(chain_path or os.getenv("AUDIT_CHAIN_PATH", "data/audit_chain.json"))
-        self.signing_secret = signing_secret or os.getenv("AUDIT_SIGNING_SECRET", "fastapi-audit-secret")
+        legacy_secret = signing_secret or os.getenv("AUDIT_SIGNING_SECRET")
+        self.transaction_signing_secret = (
+            transaction_signing_secret
+            or os.getenv("AUDIT_TX_SIGNING_SECRET")
+            or legacy_secret
+            or "fastapi-audit-tx-secret"  # segrerto di default per le transazioni (server)
+        )
+        self.block_signing_secret = (
+            block_signing_secret
+            or os.getenv("AUDIT_BLOCK_SIGNING_SECRET")
+            or legacy_secret
+            or "fastapi-audit-block-secret"  # segreto di default per i blocchi (validatore)
+        )
         self.chain_path.parent.mkdir(parents=True, exist_ok=True)
         self.chain = self._load_chain()
 
@@ -54,15 +72,16 @@ class AuditBlockchain:
     def _hash_payload(self, payload: dict[str, Any]) -> str:
         return hashlib.sha256(self._canonical_json(payload).encode("utf-8")).hexdigest()
 
-    # Firma un payload utilizzando HMAC con SHA-256.
-    def _sign_payload(self, payload: dict[str, Any]) -> str:
+    # Firma un payload utilizzando HMAC con SHA-256 e il segreto fornito.
+    def _sign_payload(self, payload: dict[str, Any], *, secret: str) -> str:
         return hmac.new(
-            self.signing_secret.encode("utf-8"),           # Chiave segreta per la firma
+            secret.encode("utf-8"),                        # Chiave segreta per la firma
             self._canonical_json(payload).encode("utf-8"), # Dati da firmare (payload in formato JSON canonico)
             hashlib.sha256,                                # Algoritmo di hash da utilizzare per HMAC
         ).hexdigest()
     
     # Costruisce un blocco della blockchain di audit con i campi richiesti, calcola l'hash e la firma del blocco.
+    # Processo PoA: 1) crea blocco base 2) calcola SHA256(blocco_base) 3) firma il risultato 4) accoda
     def _build_block(
         self,
         *,
@@ -70,8 +89,11 @@ class AuditBlockchain:
         event_type: str,
         payload: dict[str, Any],
         previous_hash: str,
+        timestamp: str | None = None,
     ) -> dict[str, Any]:
-        timestamp = datetime.now(timezone.utc).isoformat()
+        if timestamp is None:
+            timestamp = datetime.now(timezone.utc).isoformat()
+        # Step 1: Crea il blocco base (senza hash e firma)
         block = {
             "index": index,
             "timestamp": timestamp,
@@ -80,26 +102,78 @@ class AuditBlockchain:
             "validator": "fastapi-poa-node",
             "previous_hash": previous_hash,
         }
-        block["hash"] = self._hash_payload(block) # Calcola l'hash del blocco (che include hash del blocco precedente)
-        block["signature"] = self._sign_payload({"hash": block["hash"], "validator": block["validator"]})
+        # Step 2: Calcola SHA256 del blocco base
+        block["hash"] = self._hash_payload(block)
+        
+        # Step 3: Firma il risultato SHA256 (l'hash del blocco)
+        # La firma è HMAC-SHA256 del hash + validator
+        block["signature"] = self._sign_payload(
+            {"hash": block["hash"], "validator": block["validator"]},
+            secret=self.block_signing_secret,
+        )
+        
         return block
 
-    # Crea una nuova transazione (blocco) nella blockchain di audit con il tipo di evento e il payload forniti.
-    def create_block(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
-        previous_hash = self.chain["chain"][-1]["hash"] if self.chain.get("chain") else "0"
+    # Crea una transazione firmata (usato dal server).
+    # Una transazione è un evento che il server invia al validatore.
+    def create_transaction(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Crea una transazione firmata dal server. Il validatore poi ne creerà un blocco."""
+        timestamp = datetime.now(timezone.utc).isoformat()
+        transaction = {
+            "event_type": event_type,
+            "payload": payload,
+            "timestamp": timestamp,
+            "server_id": "fastapi-server",
+        }
+        # Firma la transazione
+        transaction["signature"] = self._sign_payload(
+            transaction,
+            secret=self.transaction_signing_secret,
+        )
+        return transaction
+
+    # Verifica una transazione firmata ricevuta dal server.
+    def verify_transaction(self, transaction: dict[str, Any]) -> bool:
+        """Verifica la firma della transazione. Usato dal validatore prima di creare il blocco."""
+        required_fields = {"event_type", "payload", "timestamp", "server_id", "signature"}
+        if not required_fields.issubset(transaction.keys()):
+            return False
+
+        if transaction.get("server_id") != "fastapi-server":
+            return False
+
+        # Ricostruisci la transazione senza firma per verificare
+        tx_data = {
+            "event_type": transaction["event_type"],
+            "payload": transaction["payload"],
+            "timestamp": transaction["timestamp"],
+            "server_id": transaction["server_id"],
+        }
+        expected_signature = self._sign_payload(
+            tx_data,
+            secret=self.transaction_signing_secret,
+        )
+        return hmac.compare_digest(transaction.get("signature", ""), expected_signature)
+
+    # Restituisce l'hash del blocco precedente o "0" se la catena e' vuota.
+    def _get_previous_hash(self) -> str:
+        return self.chain["chain"][-1]["hash"] if self.chain.get("chain") else "0"
+
+    # Crea un blocco nella blockchain di audit con il tipo di evento e il payload forniti.
+    def create_block(
+        self,
+        event_type: str,
+        payload: dict[str, Any],
+        timestamp: str | None = None,
+    ) -> dict[str, Any]:
+        previous_hash = self._get_previous_hash()
         return self._build_block(
             index=len(self.chain["chain"]),
             event_type=event_type,
             payload=payload,
+            timestamp=timestamp,
             previous_hash=previous_hash,
         )
-
-    # Aggiunge un evento alla blockchain di audit, creando una nuova transazione e salvando la catena.
-    def append_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
-        transaction = self.create_block(event_type, payload)
-        self.chain["chain"].append(transaction)
-        self._save_chain(self.chain)
-        return transaction
 
     # Valida una transazione della blockchain di audit controllando formato, hash e firma.
     def validate_transaction(self, transaction: dict[str, Any]) -> bool:
@@ -110,6 +184,7 @@ class AuditBlockchain:
         if transaction.get("validator") != "fastapi-poa-node":
             return False
 
+        # Step 1: Ricostruisci il blocco senza firma per calcolare l'hash
         hash_payload = {
             "index": transaction["index"],
             "timestamp": transaction["timestamp"],
@@ -119,10 +194,16 @@ class AuditBlockchain:
             "previous_hash": transaction["previous_hash"],
         }
 
-        if transaction.get("hash") != self._hash_payload(hash_payload):
+        # Step 2: Verifica che l'hash del blocco sia corretto
+        expected_hash = self._hash_payload(hash_payload)
+        if transaction.get("hash") != expected_hash:
             return False
 
-        expected_signature = self._sign_payload({"hash": transaction["hash"], "validator": transaction["validator"]})
+        # Step 3: Verifica la firma (HMAC-SHA256 dell'hash)
+        expected_signature = self._sign_payload(
+            {"hash": transaction["hash"], "validator": transaction["validator"]},
+            secret=self.block_signing_secret,
+        )
         return hmac.compare_digest(transaction.get("signature", ""), expected_signature)
 
     # Filtra la catena di audit in base a utente, tipo di evento e intervallo temporale.

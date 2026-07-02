@@ -54,12 +54,14 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
         }
 
         event_type = f"{request.method.lower()}_request" # tipo di evento basato sul metodo HTTP
-        # Se il servizio di audit è abilitato, proviamo a inviare l'evento al validator remoto.
-        # In caso di fallimento, l'evento finisce nella coda pendente e verrà ritentato.
-        # Se il servizio non è configurato, scriviamo direttamente nella coda locale.
+        # Se il servizio di audit è abilitato, creiamo la transazione firmata e la inviamo al validator remoto.
+        # In caso di fallimento, la transazione finisce nella coda pendente e verrà ritentata.
+        # Se il servizio non è configurato, scriviamo direttamente nella blockchain locale.
         if audit_client.enabled:
-            sent = await audit_client.append_event(event_type, audit_payload)
+            transaction = audit_blockchain.create_transaction(event_type, audit_payload)
+            sent = await audit_client.append_transaction(transaction)
             if not sent:
+                # Se l'invio fallisce, mettiamo l'evento in coda per il retry
                 pending_queue.push(event_type, audit_payload)
                 logger.warning(
                     "[AUDIT] Validator configurato ma non raggiungibile (%s) — evento %s %s accodato (coda: %d)",
@@ -69,14 +71,16 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
                     len(pending_queue._load()),
                 )
             else:
+                # La transazione è stata accettata dal validator (e dalla sua firma verificata)
                 logger.debug(
-                    "[AUDIT] Evento inviato al validator: %s %s (status %s)",
+                    "[AUDIT] Transazione firmata inviata e verificata dal validator: %s %s (status %s)",
                     request.method, request.url.path, response.status_code,
                 )
         else:
-            audit_blockchain.append_event(event_type, audit_payload)
+            # Se il validator non è configurato, accodiamo l'evento su disco per ritentare più tardi
+            pending_queue.push(event_type, audit_payload)
             logger.debug(
-                "[AUDIT] Validator non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — evento scritto in coda locale: %s %s",
+                "[AUDIT] Validator non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — evento accodato in locale: %s %s",
                 request.method,
                 request.url.path,
             )
@@ -96,7 +100,9 @@ async def _flush_pending_events_once() -> None:
     logger.info("[AUDIT] Flush: tentativo di invio di %d eventi pendenti al validator", len(events))
     failed: list = []
     for event in events:
-        sent = await audit_client.append_event(event["event_type"], event["payload"])
+        # Ricrea la transazione durante il retry (avrà timestamp differente)
+        transaction = audit_blockchain.create_transaction(event["event_type"], event["payload"])
+        sent = await audit_client.append_transaction(transaction)
         if not sent:
             failed.append(event)
     sent_count = len(events) - len(failed)
@@ -134,7 +140,7 @@ async def startup_event() -> None:
         else:
             logger.warning("[AUDIT] Validator remoto configurato ma non raggiungibile all'avvio: %s", audit_client.validator_url)
     else:
-        logger.info("[AUDIT] Validator remoto non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — modalità coda locale")
+        logger.info("[AUDIT] Validator remoto non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — modalità coda locale persistente")
     asyncio.create_task(_flush_pending_events()) # Task in background per inviare periodicamente gli eventi pendenti al validator remoto
 
 

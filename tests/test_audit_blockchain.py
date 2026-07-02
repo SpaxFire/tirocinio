@@ -2,6 +2,7 @@ import asyncio
 import json
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException
@@ -11,7 +12,9 @@ from starlette.requests import Request
 
 import app.main as main
 from app.api.routes import pages as pages_route
+from app.api.routes import audit_validator
 from app.services.audit_blockchain import AuditBlockchain
+from app.services.pending_queue import PendingAuditQueue
 
 # Test per verificare firma e validità della catena di audit
 def test_transaction_is_signed_and_chain_is_valid(tmp_path):
@@ -32,7 +35,7 @@ def test_transaction_is_signed_and_chain_is_valid(tmp_path):
     assert blockchain.validate_transaction(tx) is True
     
     # Aggiunge un evento alla catena di audit
-    blockchain.append_event(
+    stored_tx = blockchain.create_block(
         "request",
         {
             "method": "GET",
@@ -40,6 +43,8 @@ def test_transaction_is_signed_and_chain_is_valid(tmp_path):
             "status_code": 200,
         },
     )
+    blockchain.chain["chain"].append(stored_tx)
+    blockchain._save_chain()
 
     stored = json.loads(chain_path.read_text())
     assert len(stored["chain"]) >= 2
@@ -60,7 +65,9 @@ def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
     # instanzia un AuditBlockchain temporaneo per il test
     chain_path = tmp_path / "audit_chain.json"
     blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
+    pending = PendingAuditQueue(queue_path=tmp_path / "pending.json")
     monkeypatch.setattr(main, "audit_blockchain", blockchain) # sostituisce l'istanza di AuditBlockchain nel modulo main con quella creata per il test
+    monkeypatch.setattr(main, "pending_queue", pending)
     # disabilita il client di audit per il test per evitare chiamate esterne a validator remoto
     monkeypatch.setattr(main, "audit_client", SimpleNamespace(enabled=False)) # disabilita
 
@@ -78,7 +85,89 @@ def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
 
     assert response.status_code == 200
     stored = json.loads(chain_path.read_text())
-    assert stored["chain"][-1]["event_type"] == "get_request"
+    # Il fallback senza validator deve lasciare intatta la chain locale
+    assert len(stored["chain"]) == 1
+    # L'evento deve finire nella coda persistente
+    queued = pending.pop_all()
+    assert len(queued) == 1
+    assert queued[0]["event_type"] == "get_request"
+
+
+# Test che il server crea e firma transazioni
+def test_server_creates_signed_transactions(tmp_path):
+    """Test che il server crea transazioni firmate."""
+    chain_path = tmp_path / "audit_chain.json"
+    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
+
+    # Server crea una transazione firmata
+    transaction = blockchain.create_transaction("get_request", {"path": "/posts"})
+
+    # Verifica che la transazione abbia i campi richiesti
+    assert "event_type" in transaction
+    assert "payload" in transaction
+    assert "timestamp" in transaction
+    assert "server_id" in transaction
+    assert "signature" in transaction
+
+    # Verifica che la firma sia valida
+    assert blockchain.verify_transaction(transaction) is True
+
+
+# Test che il validatore riceve una transazione, la verifica e crea un blocco
+def test_validator_receives_transaction_and_creates_block(tmp_path):
+    """Test che il validatore accetta transazioni firmate e crea blocchi."""
+    chain_path = tmp_path / "audit_chain.json"
+    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
+    audit_validator.audit_blockchain = blockchain
+
+    app = FastAPI()
+    app.include_router(audit_validator.router)
+
+    client = TestClient(app)
+
+    # Server crea una transazione firmata
+    transaction = blockchain.create_transaction("get_request", {"path": "/posts", "status_code": 200})
+
+    # Invia la transazione al validatore
+    response = client.post("/internal/audit/transactions", json=transaction)
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+    block = response.json()["block"]
+    # Verifica che il validatore abbia creato un blocco dalla transazione
+    assert block["event_type"] == "get_request"
+    assert block["payload"]["path"] == "/posts"
+    # Verifica che il blocco sia firmato e valido
+    assert "signature" in block
+    assert blockchain.validate_transaction(block) is True
+    # Verifica che il blocco sia stato aggiunto alla catena
+    assert len(blockchain.chain["chain"]) == 2  # genesis + il blocco appena aggiunto
+
+
+# Test che il validatore rifiuta transazioni con firma non valida
+def test_validator_rejects_invalid_transaction(tmp_path):
+    """Test che il validatore rifiuta transazioni con firma tamperata."""
+    chain_path = tmp_path / "audit_chain.json"
+    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
+    audit_validator.audit_blockchain = blockchain
+
+    app = FastAPI()
+    app.include_router(audit_validator.router)
+
+    client = TestClient(app)
+
+    # Crea una transazione e tampera la firma
+    transaction = blockchain.create_transaction("get_request", {"path": "/posts"})
+    transaction["signature"] = "tampered-signature"
+
+    # Invia la transazione con firma non valida
+    response = client.post("/internal/audit/transactions", json=transaction)
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is False
+    assert "Invalid transaction signature" in response.json()["error"]
+    # Verifica che il blocco non sia stato aggiunto alla catena
+    assert len(blockchain.chain["chain"]) == 1  # solo il genesis block
 
 
 # Test filtro temporale e per utente nella catena di audit
@@ -88,8 +177,12 @@ def test_filter_audit_chain_by_user_event_and_time(tmp_path):
 
     now = datetime.now(timezone.utc)
     blockchain.chain["chain"][0]["timestamp"] = (now - timedelta(hours=3)).isoformat()
-    blockchain.append_event("get_request", {"path": "/posts", "user": "alice"})
-    blockchain.append_event("post_request", {"path": "/posts", "user": "bob"})
+    first_block = blockchain.create_block("get_request", {"path": "/posts", "user": "alice"})
+    blockchain.chain["chain"].append(first_block)
+    blockchain._save_chain()
+    second_block = blockchain.create_block("post_request", {"path": "/posts", "user": "bob"})
+    blockchain.chain["chain"].append(second_block)
+    blockchain._save_chain()
     blockchain.chain["chain"][-1]["timestamp"] = (now - timedelta(hours=1)).isoformat()
 
     filtered = blockchain.filter_chain(
@@ -108,7 +201,9 @@ def test_filter_audit_chain_by_user_event_and_time(tmp_path):
 def test_admin_audit_page_is_forbidden_for_non_admin(tmp_path):
     chain_path = tmp_path / "audit_chain.json"
     blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
-    blockchain.append_event("request", {"path": "/posts"})
+    block = blockchain.create_block("request", {"path": "/posts"})
+    blockchain.chain["chain"].append(block)
+    blockchain._save_chain()
     pages_route.audit_blockchain = blockchain
 
     request = Request(
@@ -140,7 +235,9 @@ def test_admin_audit_page_is_forbidden_for_non_admin(tmp_path):
 def test_admin_audit_page_returns_partial_content_for_htmx(tmp_path):
     chain_path = tmp_path / "audit_chain.json"
     blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
-    blockchain.append_event("request", {"path": "/posts"})
+    block = blockchain.create_block("request", {"path": "/posts"})
+    blockchain.chain["chain"].append(block)
+    blockchain._save_chain()
     pages_route.audit_blockchain = blockchain
 
     request = Request(

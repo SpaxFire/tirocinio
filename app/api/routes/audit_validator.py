@@ -10,11 +10,17 @@ router = APIRouter(prefix="/internal/audit", tags=["audit-validator"])
 audit_blockchain = AuditBlockchain()
 logger = logging.getLogger("audit")
 
-# Route per la gestione degli eventi di audit e della catena di audit. 
-# Queste route sono utilizzate dal servizio di audit esterno per interagire con il server.
-class AuditEventRequest(BaseModel):
+# Schema per ricevere una transazione firmata dal server
+class SignedTransactionRequest(BaseModel):
     event_type: str
     payload: dict[str, Any]
+    timestamp: str
+    server_id: str
+    signature: str
+
+
+# Route per la gestione degli eventi di audit e della catena di audit. 
+# Queste route sono utilizzate dal servizio di audit esterno per interagire con il server.
 
 
 # Route per la verifica dello stato del servizio di audit esterno (usato per debug e monitoraggio)
@@ -23,12 +29,42 @@ async def healthcheck() -> dict[str, str]:
     logger.info("[AUDIT] Validator healthcheck ricevuto")
     return {"status": "ok"}
 
-# Route per l'aggiunta di un evento di audit alla catena di audit
-@router.post("/events")
-async def append_event(event: AuditEventRequest) -> dict[str, Any]:
-    transaction = audit_blockchain.append_event(event.event_type, event.payload)
-    logger.info("[AUDIT] Validator ha salvato evento %s", event.event_type)
-    return {"ok": True, "transaction": transaction}
+# Route per ricevere una transazione firmata dal server, verificarla e creare il blocco
+@router.post("/transactions")
+async def append_transaction(tx: SignedTransactionRequest) -> dict[str, Any]:
+    """Riceve una transazione firmata dal server.
+    1. Verifica la firma della transazione
+    2. Crea il blocco dalla transazione
+    3. Firma il blocco e lo accoda
+    """
+    tx_dict = tx.model_dump()
+    
+    # Step 1: Verifica la firma della transazione
+    if not audit_blockchain.verify_transaction(tx_dict):
+        logger.warning(
+            "[AUDIT] Rifiutata transazione con firma non valida: evento %s",
+            tx.event_type,
+        )
+        return {"ok": False, "error": "Invalid transaction signature"}
+    
+    # Step 2: Crea il blocco dalla transazione verificata
+    # (il validatore è l'autorità PoA che crea i blocchi)
+    block = audit_blockchain.create_block(
+        event_type=tx_dict["event_type"],
+        payload=tx_dict["payload"],
+        timestamp=tx_dict["timestamp"],
+    )
+    
+    # Step 3: Accoda il blocco alla catena
+    audit_blockchain.chain["chain"].append(block)
+    audit_blockchain._save_chain()
+    
+    logger.info(
+        "[AUDIT] Validator ha verificato e bloccato transazione: evento %s (index %d, signature valida)",
+        tx.event_type,
+        block["index"],
+    )
+    return {"ok": True, "block": block}
 
 
 # Route per ottenere la vista della catena di audit

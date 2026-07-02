@@ -100,7 +100,7 @@ Ogni nuovo terminale richiede la riattivazione dell'ambiente virtuale prima dei 
 
 ## Audit separato (Server + Validator)
 
-Da questa versione puoi eseguire la validazione audit come servizio separato.
+Da questa versione (separata da progetto originale di Luca) puoi eseguire la validazione audit come servizio separato.
 
 L'avvio precedente con solo server web continua a funzionare: se `AUDIT_VALIDATOR_URL` non e impostata, il server usa automaticamente la coda locale come fallback.
 
@@ -109,10 +109,50 @@ L'avvio precedente con solo server web continua a funzionare: se `AUDIT_VALIDATO
 Terminale A (validator):
 
 	. .venv/bin/activate
+	export AUDIT_TX_SIGNING_SECRET=tx-secret-dev
+	export AUDIT_BLOCK_SIGNING_SECRET=block-secret-dev
 	python -m uvicorn app.validator_main:validator_app --host 127.0.0.1 --port 8001 --reload
 
 Terminale B (server web):
 
 	. .venv/bin/activate
 	export AUDIT_VALIDATOR_URL=http://127.0.0.1:8001
+	export AUDIT_TX_SIGNING_SECRET=tx-secret-dev
+	export AUDIT_BLOCK_SIGNING_SECRET=block-secret-dev
 	python -m fastapi dev app/main.py
+
+### Come funziona il validatore
+
+Il validatore e un servizio FastAPI separato che riceve eventi di audit dal server principale e li trasforma in blocchi firmati della catena.
+
+Flusso completo:
+
+1. Il middleware del server intercetta ogni richiesta HTTP e costruisce un evento di audit (`event_type` + `payload`).
+2. Se `AUDIT_VALIDATOR_URL` e valorizzata, il server crea una **transazione firmata** (HMAC-SHA256) e la invia al validatore su `POST /internal/audit/transactions`.
+3. Il validatore verifica la firma della transazione, crea il blocco (con `previous_hash`, `hash`, `signature`) e lo salva in `data/audit_chain.json`.
+4. Se il validatore non e configurato o non e raggiungibile, l'evento viene accodato su `data/pending_audit_events.json`.
+5. Un task in background del server tenta periodicamente (ogni 30 secondi) il flush della coda pendente verso il validatore.
+
+In questo modo non perdi eventi anche in caso di problemi temporanei di rete o se il validatore viene avviato dopo il server.
+
+### Variabili ambiente utili
+
+* `AUDIT_VALIDATOR_URL`: URL base del servizio validatore (es. `http://127.0.0.1:8001`). Se vuota, il server lavora in modalita coda locale persistente.
+* `AUDIT_CHAIN_PATH`: percorso file catena audit (default: `data/audit_chain.json`).
+* `AUDIT_PENDING_PATH`: percorso file coda eventi pendenti (default: `data/pending_audit_events.json`).
+* `AUDIT_TX_SIGNING_SECRET`: segreto condiviso tra server e validatore per firmare/verificare le transazioni server -> validator.
+* `AUDIT_BLOCK_SIGNING_SECRET`: segreto usato per firmare/verificare i blocchi della chain (separato da quello delle transazioni).
+
+Compatibilita con versioni precedenti:
+
+* `AUDIT_SIGNING_SECRET` resta supportata come fallback legacy (se valorizzata, viene usata per entrambi i flussi).
+
+### Endpoint del validatore
+
+* `GET /internal/audit/health`: healthcheck del servizio validatore.
+* `POST /internal/audit/transactions`: riceve una transazione firmata, verifica la firma e crea/accoda un blocco.
+* `GET /internal/audit/chain`: restituisce la catena (anche filtrata con `user`, `event_type`, `start_time`, `end_time`) e il campo `is_valid`.
+
+### Verifica lato admin
+
+La pagina admin `/admin/audit` prova a leggere la catena dal validatore remoto quando configurato; in caso di fallback usa la vista locale. In entrambi i casi viene mostrato lo stato di validita (`is_valid`) della chain.

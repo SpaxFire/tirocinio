@@ -28,23 +28,36 @@ class AuditServiceClient:
     def enabled(self) -> bool:
         return bool(self.validator_url)
     
-    # Funzione per inviare un evento di audit al servizio esterno
-    async def append_event(self, event_type: str, payload: dict[str, Any]) -> bool:
+    # Metodo privato per inviare dati al validator con error handling
+    async def _post_to_validator(self, endpoint: str, data: dict[str, Any]) -> bool:
+        """Invia dati al validator tramite POST."""
         if not self.enabled:
             return False
-        # Costruiamo l'endpoint per inviare l'evento di audit al servizio esterno
-        endpoint = f"{self.validator_url}/internal/audit/events"
+        full_endpoint = f"{self.validator_url}{endpoint}"
         try:
             async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-                response = await client.post(
-                    endpoint,
-                    json={"event_type": event_type, "payload": payload},
-                )
+                response = await client.post(full_endpoint, json=data)
                 response.raise_for_status()
             return True
         except httpx.HTTPError as exc:
-            logger.warning("[AUDIT] Connessione al validator fallita (%s): %s", endpoint, exc)
+            logger.warning("[AUDIT] Connessione al validator fallita (%s): %s", full_endpoint, exc)
             return False
+    
+    # Funzione per inviare una transazione firmata dal server al validatore
+    async def append_transaction(self, transaction: dict[str, Any]) -> bool:
+        """Invia una transazione firmata al validatore per la verifica e creazione del blocco."""
+        return await self._post_to_validator(
+            "/internal/audit/transactions",
+            transaction,
+        )
+
+    # Funzione per inviare un blocco firmato al servizio esterno con verifica della firma
+    async def append_signed_block(self, block: dict[str, Any]) -> bool:
+        """Invia un blocco firmato al validatore. La firma viene verificata dal validatore."""
+        return await self._post_to_validator(
+            "/internal/audit/blocks",
+            block,
+        )
     
     # Funzione per verificare se il servizio di audit esterno è raggiungibile (chiamando l'endpoint di healthcheck)
     async def is_reachable(self) -> bool:
