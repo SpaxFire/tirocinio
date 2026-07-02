@@ -84,6 +84,7 @@ class AuditServiceClient:
         end_time: str | None = None,
     ) -> dict[str, Any] | None:
         if not self.enabled:
+            logger.info("[AUDIT] get_chain_view saltata: validator non configurato")
             return None
 
         # Costruiamo l'endpoint per ottenere la vista della catena di audit dal servizio esterno
@@ -100,8 +101,15 @@ class AuditServiceClient:
                 response = await client.get(endpoint, params=params)
                 response.raise_for_status()
                 payload = response.json()
+            logger.info(
+                "[AUDIT] get_chain_view OK: endpoint=%s status=%s",
+                endpoint,
+                response.status_code,
+            )
             if not isinstance(payload, dict):
+                logger.warning("[AUDIT] get_chain_view payload non-dict: %s", type(payload).__name__)
                 return None
+            logger.debug("[AUDIT] get_chain_view keys payload: %s", list(payload.keys()))
             return payload
         except (httpx.HTTPError, ValueError) as exc:
             logger.warning("[AUDIT] Errore durante il recupero della vista della catena di audit (%s): %s", endpoint, exc)

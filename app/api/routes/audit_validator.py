@@ -83,7 +83,14 @@ async def get_chain(
         start_time=start_time,
         end_time=end_time,
     )
+    is_valid = audit_blockchain.validate_chain()
+    logger.info(
+        "[AUDIT] Validator chain response: is_valid=%s filtered_blocks=%d total_blocks=%d",
+        is_valid,
+        len(filtered_chain),
+        len(chain.get("chain", [])) if isinstance(chain, dict) else 0,
+    )
     return {
         "chain": {**chain, "chain": filtered_chain},
-        "is_valid": audit_blockchain.validate_chain(),
+        "is_valid": is_valid,
     }

@@ -1,10 +1,13 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger("audit")
 
 # classe AuditBlockchain per la gestione della blockchain di audit
 class AuditBlockchain:
@@ -258,6 +261,7 @@ class AuditBlockchain:
     def validate_chain(self) -> bool:
         chain = self.chain.get("chain", [])
         if not chain:
+            logger.warning("[AUDIT] validate_chain: chain vuota")
             return False
 
         expected_previous_hash = "0" # hash del blocco genesi
@@ -265,11 +269,25 @@ class AuditBlockchain:
         # Validiamo ogni blocco della catena, controllando la firma, l'indice e l'hash del blocco precedente.
         for index, block in enumerate(chain):
             if not self.validate_transaction(block):
+                logger.warning(
+                    "[AUDIT] validate_chain: transazione non valida al blocco index=%s",
+                    block.get("index"),
+                )
                 return False
             if block.get("index") != index:
+                logger.warning(
+                    "[AUDIT] validate_chain: indice incoerente al blocco atteso=%d trovato=%s",
+                    index,
+                    block.get("index"),
+                )
                 return False
             if index > 0 and block.get("previous_hash") != expected_previous_hash:
+                logger.warning(
+                    "[AUDIT] validate_chain: previous_hash incoerente al blocco index=%d",
+                    index,
+                )
                 return False
             expected_previous_hash = block.get("hash", "")
 
+        logger.info("[AUDIT] validate_chain: catena valida con %d blocchi", len(chain))
         return True
