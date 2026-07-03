@@ -19,27 +19,38 @@ async def notifications_page(
     user: UserInDB = Depends(get_current_active_user),
     hx_request: Annotated[str | None, Header()] = None,
 ):
+    active_tab = request.query_params.get("tab", "posts").lower()
+    if active_tab not in {"posts", "likes", "comments"}:
+        active_tab = "posts"
+
     events = notification_broker.get_history()
     notifications = []
 
     for event in reversed(events):
         payload = event.get("payload", {})
-        if payload.get("type") != "post_created":
+        event_type = payload.get("type", "post_created")
+        if event_type not in {"post_created", "post_liked", "post_commented"}:
+            continue
+
+        if active_tab == "posts" and event_type != "post_created":
+            continue
+        if active_tab == "likes" and event_type != "post_liked":
+            continue
+        if active_tab == "comments" and event_type != "post_commented":
             continue
 
         author = payload.get("author")
         if not author or not user_db.is_following(user.id, author):
             continue
 
-        preview = str(payload.get("content", ""))
-        if len(preview) > 140:
-            preview = f"{preview[:137]}..."
-
+        notification = notification_broker.get_notification_details(payload)
         notifications.append(
             {
                 "author": author,
-                "content": preview,
-                "post_id": payload.get("post_id"),
+                "content": notification["content"],
+                "post_id": notification["post_id"],
+                "title": notification["title"],
+                "type": notification["type"],
             }
         )
 
@@ -50,6 +61,7 @@ async def notifications_page(
             "request": request,
             "notifications": notifications,
             "user": user,
+            "active_tab": active_tab,
         },
     )
 
@@ -68,13 +80,16 @@ async def notifications_stream(
 
                 event = await asyncio.wait_for(queue.get(), timeout=None)
                 payload = event.get("payload", {})
+                event_type = payload.get("type", "post_created")
 
-                if payload.get("type") == "post_created":
-                    author = payload.get("author")
-                    if not author or not user_db.is_following(user.id, author):
-                        continue
+                if event_type not in {"post_created", "post_liked", "post_commented"}:
+                    continue
 
-                html_fragment = notification_broker.build_post_created_html(payload)
+                author = payload.get("author")
+                if not author or not user_db.is_following(user.id, author):
+                    continue
+
+                html_fragment = notification_broker.build_notification_html(payload)
                 yield f"event: message\ndata: {html_fragment}\n\n"
         except asyncio.TimeoutError:
             yield "event: ping\ndata: {}\n\n"

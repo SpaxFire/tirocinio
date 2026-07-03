@@ -6,6 +6,7 @@ from app.db import post as post_db
 from app.db import comment as comment_db
 from app.core.config import templates
 from app.schemas.user import UserInDB
+from app.services.mqtt_client import mqtt_notification_client
 
 router = APIRouter(tags=["comments"])
 
@@ -86,6 +87,14 @@ async def create_comment(
         post_id=post_id,
         username=user.username,
         content=content
+    )
+    mqtt_notification_client.publish(
+        {
+            "type": "post_commented",
+            "author": user.username,
+            "content": content,
+            "post_id": post_id,
+        }
     )
     # recupero dati aggiornati del post per renderizzare correttamente i commenti
     comments = await comment_db.get_comments_of_post(post_id)

@@ -3,32 +3,5 @@
 {% block title %}Notifiche{% endblock %}
 
 {% block content %}
-<div class="bg-white rounded-xl shadow p-6">
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-slate-900">Notifiche</h1>
-            <p class="text-sm text-slate-500">Tutte le notifiche ricevute dagli utenti che segui.</p>
-        </div>
-    </div>
-
-    <div id="notifications-list" class="space-y-3">
-        {% if notifications %}
-        {% for notification in notifications %}
-        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50">
-            <div class="font-semibold text-slate-900">Nuovo post da {{ notification.author }}</div>
-            <div class="mt-1 text-sm text-slate-600">{{ notification.content }}</div>
-            {% if notification.post_id %}
-            <a hx-get="/posts/{{ notification.post_id }}" hx-target="#main-content" hx-push-url="true"
-                hx-swap="innerHTML"
-                class="mt-3 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer">
-                Vai al post
-            </a>
-            {% endif %}
-        </div>
-        {% endfor %}
-        {% else %}
-        <div class="text-sm text-slate-500">Non hai ancora ricevuto notifiche.</div>
-        {% endif %}
-    </div>
-</div>
+{% include "notifications/partials/notifications_content.html" %}
 {% endblock %}

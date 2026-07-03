@@ -21,7 +21,7 @@ class NotificationBroker:
         async with self._lock:
             self._subscribers.pop(subscriber_id, None)
 
-    async def publish(self, payload: dict[str, Any], topic: str = "posts.created") -> None:
+    async def publish(self, payload: dict[str, Any], topic: str = "notifications.created") -> None:
         event = {
             "topic": topic,
             "payload": payload,
@@ -39,60 +39,82 @@ class NotificationBroker:
     def clear(self) -> None:
         self._history.clear()
 
-    def build_post_created_html(self, payload: dict[str, Any], notifications: list[dict[str, Any]] | None = None) -> str:
-        author = html.escape(str(payload.get("author", "qualcuno")))
-        content = html.escape(str(payload.get("content", "")))
+    def get_notification_details(self, payload: dict[str, Any]) -> dict[str, Any]:
+        event_type = payload.get("type", "post_created")
+        author = str(payload.get("author", "qualcuno"))
+        content = str(payload.get("content", ""))
         preview = content[:140]
         if len(content) > 140:
             preview = f"{preview}..."
         post_id = payload.get("post_id")
-        post_link = f'/posts/{post_id}' if post_id else '/notifications'
 
-        items = notifications or []
-        if not any(item.get("post_id") == post_id for item in items):
-            items = [
-                {
-                    "author": payload.get("author"),
-                    "content": preview,
-                    "post_id": post_id,
-                },
-                *items,
-            ]
+        if event_type == "post_liked":
+            title = f"{author} ha messo like a"
+            fallback = "Ha lasciato un like"
+        elif event_type == "post_commented":
+            title = f"{author} ha commentato"
+            fallback = "Ha lasciato un commento"
+        else:
+            title = f"Nuovo post da {author}"
+            fallback = "Nuovo contenuto disponibile"
 
-        rendered_items = []
-        for item in items:
-            item_author = html.escape(str(item.get("author", "qualcuno")))
-            item_content = html.escape(str(item.get("content", "")))
-            item_preview = item_content[:140]
-            if len(item_content) > 140:
-                item_preview = f"{item_preview}..."
-            item_post_id = item.get("post_id")
-            rendered_items.append(
-                '<div class="rounded-xl border border-slate-200 p-4 bg-slate-50">'
-                '<div class="font-semibold text-slate-900">'
-                f'Nuovo post da {item_author}'
-                '</div>'
-                f'<div class="mt-1 text-sm text-slate-600">{item_preview}</div>'
-                f'<a hx-get="/posts/{item_post_id}" hx-target="#main-content" hx-push-url="true" hx-swap="innerHTML"'
-                'class="mt-3 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer">'
-                'Vai al post'
-                '</a>'
-                '</div>'
-            )
+        return {
+            "type": event_type,
+            "title": title,
+            "content": preview or fallback,
+            "post_id": post_id,
+            "author": author,
+        }
 
-        list_html = ''.join(rendered_items)
+    def build_notification_html(self, payload: dict[str, Any]) -> str:
+        notification = self.get_notification_details(payload)
+        
+        item_type = notification.get("type", "post_created")
+        item_author = html.escape(str(payload.get("author", "qualcuno")))
+        item_content = html.escape(str(notification.get("content", "")))
+        item_post_id = notification.get("post_id")
 
-        return (
-            '<div class="msg-notification"'
-            'hx-on::load="setTimeout(() => event.target.remove(), 4000)"'
-            'hx-get="notifications" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">'
-            f'<div>Nuovo post da {author}:</div>'
-            f'<div class="text-sm text-slate-900">{preview}</div>'
-            '</div>'
-            '<div id="notifications-list" hx-swap-oob="afterbegin:#notifications-list">'
-            f'{list_html}'
-            '</div>'
+        if item_type == "post_liked":
+            item_title = f"{item_author} ha messo like ad un post"
+            tab_type = "likes"
+        elif item_type == "post_commented":
+            item_title = f"{item_author} ha commentato un post"
+            tab_type = "comments"
+        else:
+            item_title = f"Nuovo post da {item_author}"
+            tab_type = "posts"
+
+        # Frammento per la lista (con hx-swap-oob) - Aggiungiamo 'notification-item' e 'data-tab'
+        # Usiamo classi CSS per controllare la visibilità dinamica lato client
+        list_element_html = (
+            f'<div class="notification-item rounded-xl border border-slate-200 p-4 bg-slate-50 transition-all" data-tab="{tab_type}">'
+            f'<div class="font-semibold text-slate-900">{item_title}</div>'
+            f'<div class="mt-1 text-sm text-slate-600">{item_content}</div>'
+            f'<a hx-get="/posts/{item_post_id}" hx-target="#main-content" hx-push-url="true" hx-swap="innerHTML" '
+            f'class="mt-3 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer">'
+            f'Vai al post</a>'
+            f'</div>'
         )
+
+        popup_title = html.escape(notification["title"])
+        popup_preview = html.escape(notification["content"])
+
+        # Il popup viene mostrato sempre. L'elemento della lista viene inserito.
+        # Aggiungiamo un blocco OOB per eliminare il placeholder se la notifica appartiene alla tab corrente
+        return (
+            f'<div class="msg-notification" hx-on::load="setTimeout(() => event.target.remove(), 4000)" '
+            f'hx-get="/notifications?tab={tab_type}" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">'
+            f'<div>{popup_title}</div>'
+            f'<div class="text-sm text-slate-900">{popup_preview}</div>'
+            f'</div>'
+            f'<div id="notifications-list" hx-swap-oob="afterbegin:#notifications-list">'
+            f'{list_element_html}'
+            f'</div>'
+            f'<div id="no-notifications" hx-swap-oob="delete"></div>' # <-- RIMUOVE IL PLACEHOLDER DAL DOM
+        )
+
+    def build_post_created_html(self, payload: dict[str, Any], notifications: list[dict[str, Any]] | None = None) -> str:
+        return self.build_notification_html(payload, notifications)
 
 
 notification_broker = NotificationBroker()

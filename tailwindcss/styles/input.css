@@ -107,4 +107,16 @@
     .nav-item.active {
         @apply border-blue-600 text-blue-600;
     }
+
+    /* Nascondi di default tutti i nuovi elementi arrivati via SSE nella lista */
+    #notifications-list .notification-item {
+        display: none;
+    }
+
+    /* Mostra l'elemento solo se il suo data-tab coincide con il data-active-tab del padre */
+    #notifications-list[data-active-tab="posts"] .notification-item[data-tab="posts"],
+    #notifications-list[data-active-tab="likes"] .notification-item[data-tab="likes"],
+    #notifications-list[data-active-tab="comments"] .notification-item[data-tab="comments"] {
+        display: block;
+    }
 }

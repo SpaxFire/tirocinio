@@ -134,6 +134,76 @@ def test_notifications_page_lists_received_notifications_with_post_links():
         notification_broker.clear()
 
 
+def test_notifications_page_filters_likes_and_comments_from_followed_users():
+    client = TestClient(app)
+    notification_broker.clear()
+
+    def override_current_user():
+        return UserInDB(
+            id="user-1",
+            username="alice",
+            email="alice@example.com",
+            password_hash="hash",
+            role="USER",
+            bio=None,
+            profile_image=None,
+            created_at=None,
+            is_active=True,
+        )
+
+    app.dependency_overrides[get_current_active_user] = override_current_user
+    try:
+        asyncio.run(
+            notification_broker.publish(
+                {
+                    "type": "post_liked",
+                    "author": "bob",
+                    "content": "",
+                    "post_id": "post-like-123",
+                }
+            )
+        )
+        asyncio.run(
+            notification_broker.publish(
+                {
+                    "type": "post_commented",
+                    "author": "carol",
+                    "content": "Bellissimo post",
+                    "post_id": "post-comment-123",
+                }
+            )
+        )
+        asyncio.run(
+            notification_broker.publish(
+                {
+                    "type": "post_created",
+                    "author": "dave",
+                    "content": "Nuovo post",
+                    "post_id": "post-created-123",
+                }
+            )
+        )
+
+        with patch("app.api.routes.notifications.user_db.is_following", return_value=True):
+            likes_response = client.get("/notifications?tab=likes")
+            comments_response = client.get("/notifications?tab=comments")
+            posts_response = client.get("/notifications?tab=posts")
+
+        assert likes_response.status_code == 200
+        assert "ha messo like" in likes_response.text.lower()
+        assert "post-like-123" in likes_response.text
+
+        assert comments_response.status_code == 200
+        assert "ha commentato" in comments_response.text.lower()
+        assert "Bellissimo post" in comments_response.text
+
+        assert posts_response.status_code == 200
+        assert "Nuovo post da" in posts_response.text
+    finally:
+        app.dependency_overrides.clear()
+        notification_broker.clear()
+
+
 @pytest.mark.anyio
 async def test_notification_stream_filters_events_for_followed_users():
     subscriber_id, queue = await notification_broker.subscribe()

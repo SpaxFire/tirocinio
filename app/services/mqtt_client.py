@@ -21,7 +21,7 @@ class MqttNotificationClient:
         self._port = int(os.getenv("MQTT_BROKER_PORT", "1883"))
         self._username = os.getenv("MQTT_USERNAME")
         self._password = os.getenv("MQTT_PASSWORD")
-        self._topic = os.getenv("MQTT_TOPIC", "posts.created")
+        self._topic = os.getenv("MQTT_TOPIC", "notifications.created")
         self._client = None
         self._loop: asyncio.AbstractEventLoop | None = None
         self._connected = False

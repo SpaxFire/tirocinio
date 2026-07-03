@@ -360,6 +360,17 @@ async def like_post(
     user: UserInDB = Depends(require_user_cookie),
 ):
     liked, like_count = post_db.toggle_like(post_id, user.username)
+    post = post_db.get_post_by_id(post_id, user.id)
+
+    if liked:
+        mqtt_notification_client.publish(
+            {
+                "type": "post_liked",
+                "author": user.username,
+                "content": post["author"],
+                "post_id": post_id,
+            }
+        )
 
     return templates.TemplateResponse(
         "posts/partials/like_button.html",

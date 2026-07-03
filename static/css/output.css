@@ -1440,6 +1440,12 @@
     border-color: var(--color-blue-600);
     color: var(--color-blue-600);
   }
+  #notifications-list .notification-item {
+    display: none;
+  }
+  #notifications-list[data-active-tab="posts"] .notification-item[data-tab="posts"], #notifications-list[data-active-tab="likes"] .notification-item[data-tab="likes"], #notifications-list[data-active-tab="comments"] .notification-item[data-tab="comments"] {
+    display: block;
+  }
 }
 @property --tw-space-y-reverse {
   syntax: "*";
