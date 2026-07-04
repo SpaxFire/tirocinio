@@ -32,7 +32,7 @@ def test_transaction_is_signed_and_chain_is_valid(tmp_path):
         },
     )
 
-    assert blockchain.validate_transaction(tx) is True
+    assert blockchain.validate_block(tx) is True
     
     # Aggiunge un evento alla catena di audit
     stored_tx = blockchain.create_block(
@@ -58,7 +58,7 @@ def test_invalid_signature_is_rejected(tmp_path):
     tx = blockchain.create_block("request", {"path": "/posts"})
     tx["signature"] = "tampered"
 
-    assert blockchain.validate_transaction(tx) is False
+    assert blockchain.validate_block(tx) is False
 
 # Test Middleware intercetta la richiesta HTTP, identifica l’utente e registra l’evento nella audit chain.
 def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
@@ -140,7 +140,7 @@ def test_validator_receives_transaction_and_creates_block(tmp_path):
     assert block["payload"]["path"] == "/posts"
     # Verifica che il blocco sia firmato e valido
     assert "signature" in block
-    assert blockchain.validate_transaction(block) is True
+    assert blockchain.validate_block(block) is True
     # Verifica che il blocco sia stato aggiunto alla catena
     assert len(blockchain.chain["chain"]) == 2  # genesis + il blocco appena aggiunto
 

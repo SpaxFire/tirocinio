@@ -179,7 +179,7 @@ class AuditBlockchain:
         )
 
     # Valida una transazione della blockchain di audit controllando formato, hash e firma.
-    def validate_transaction(self, transaction: dict[str, Any]) -> bool:
+    def validate_block(self, transaction: dict[str, Any]) -> bool:
         required_fields = {"index", "timestamp", "event_type", "payload", "validator", "previous_hash", "hash", "signature"}
         if not required_fields.issubset(transaction.keys()):
             return False
@@ -268,7 +268,7 @@ class AuditBlockchain:
 
         # Validiamo ogni blocco della catena, controllando la firma, l'indice e l'hash del blocco precedente.
         for index, block in enumerate(chain):
-            if not self.validate_transaction(block):
+            if not self.validate_block(block):
                 logger.warning(
                     "[AUDIT] validate_chain: transazione non valida al blocco index=%s",
                     block.get("index"),
