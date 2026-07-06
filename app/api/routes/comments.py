@@ -88,6 +88,8 @@ async def create_comment(
         username=user.username,
         content=content
     )
+
+    # Pubblicazione della notifica del commento tramite MQTT
     mqtt_notification_client.publish(
         {
             "type": "post_commented",

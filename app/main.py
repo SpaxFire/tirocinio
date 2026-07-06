@@ -12,6 +12,7 @@ from app.services.mqtt_client import mqtt_notification_client
 
 app = FastAPI()
 
+# Startup e shutdown events per il client MQTT, che si connette al broker all'avvio dell'applicazione e si disconnette alla chiusura
 @app.on_event("startup")
 async def startup_event() -> None:
     mqtt_notification_client.attach_loop(asyncio.get_running_loop())

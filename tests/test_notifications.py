@@ -10,7 +10,7 @@ from app.core.security import get_current_active_user
 from app.schemas.user import UserInDB
 from app.services.mqtt_client import mqtt_notification_client
 from app.services.mqtt_subscriber import MqttSubscriberService
-from app.services.notifications import NotificationBroker, notification_broker
+from app.services.notification_broker import NotificationBroker, notification_broker
 
 
 @pytest.mark.anyio

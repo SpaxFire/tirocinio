@@ -3,13 +3,14 @@ import html
 import json
 from typing import Any
 
-
+# Classe per la gestione del broker di notifiche, che mantiene lo storico delle notifiche e gestisce gli abbonati
 class NotificationBroker:
     def __init__(self) -> None:
         self._subscribers: dict[str, asyncio.Queue[dict[str, Any]]] = {}
         self._history: list[dict[str, Any]] = []
         self._lock = asyncio.Lock()
 
+    # Iscrive un nuovo abbonato e restituisce l'ID dell'abbonato e la coda delle notifiche
     async def subscribe(self) -> tuple[str, asyncio.Queue[dict[str, Any]]]:
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         subscriber_id = f"sub-{id(queue)}"
@@ -21,6 +22,7 @@ class NotificationBroker:
         async with self._lock:
             self._subscribers.pop(subscriber_id, None)
 
+    # Pubblica una notifica a tutti gli abbonati e la aggiunge allo storico
     async def publish(self, payload: dict[str, Any], topic: str = "notifications.created") -> None:
         event = {
             "topic": topic,
@@ -39,6 +41,7 @@ class NotificationBroker:
     def clear(self) -> None:
         self._history.clear()
 
+    # Restituisce i dettagli della notifica in base al payload ricevuto, formattando il titolo e il contenuto
     def get_notification_details(self, payload: dict[str, Any]) -> dict[str, Any]:
         event_type = payload.get("type", "post_created")
         author = str(payload.get("author", "qualcuno"))
@@ -66,6 +69,7 @@ class NotificationBroker:
             "author": author,
         }
 
+    # Costruisce l'HTML della notifica in base al payload ricevuto, formattando il titolo, il contenuto e il link al post
     def build_notification_html(self, payload: dict[str, Any]) -> str:
         notification = self.get_notification_details(payload)
         

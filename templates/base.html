@@ -55,6 +55,7 @@
     <!-- USER WIDGET FLOATING -->
     <div class="fixed bottom-6 right-6 w-80 max-w-[90vw] flex flex-col gap-4 z-[9999]">
 
+        <!-- NOTIFICATIONS PANEL realizzato tramite SSE -->
         <div id="notifications-panel" class="space-y-2 max-h-[60vh] overflow-y-auto" hx-ext="sse"
             sse-connect="/notifications/stream" sse-swap="message" hx-swap="beforeend">
         </div>

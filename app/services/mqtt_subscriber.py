@@ -3,11 +3,11 @@ import json
 import logging
 from typing import Any
 
-from app.services.notifications import notification_broker
+from app.services.notification_broker import notification_broker
 
 logger = logging.getLogger(__name__)
 
-
+# Classe per la gestione del servizio di sottoscrizione MQTT
 class MqttSubscriberService:
     def __init__(self) -> None:
         self._loop: asyncio.AbstractEventLoop | None = None
@@ -15,6 +15,7 @@ class MqttSubscriberService:
     def attach_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
 
+    # Callback per la gestione dei messaggi MQTT ricevuti
     def _on_message(self, client, userdata, message) -> None:
         topic = message.topic
         try:
@@ -25,6 +26,7 @@ class MqttSubscriberService:
         loop = self._loop or asyncio.get_running_loop()
         if loop.is_running():
             loop.call_soon_threadsafe(
+                # Pubblicazione della notifica tramite il broker di notifiche
                 lambda: asyncio.create_task(notification_broker.publish(payload, topic=topic))
             )
 

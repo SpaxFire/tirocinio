@@ -58,6 +58,7 @@ async def create_post(
             media_urls=media_urls,
         )
 
+        # Pubblicazione della notifica di creazione del post tramite MQTT
         mqtt_notification_client.publish(
             {
                 "type": "post_created",
@@ -363,6 +364,7 @@ async def like_post(
     post = post_db.get_post_by_id(post_id, user.id)
 
     if liked:
+        # Pubblicazione della notifica di like tramite MQTT
         mqtt_notification_client.publish(
             {
                 "type": "post_liked",
