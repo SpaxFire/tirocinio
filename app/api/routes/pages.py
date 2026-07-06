@@ -1,5 +1,6 @@
+import logging
 from typing import Annotated
-from fastapi import Depends, Request, Header, APIRouter
+from fastapi import Depends, Request, Header, APIRouter, HTTPException, status
 from fastapi.responses import HTMLResponse
 from app.core.config import templates
 from app.core.security import optional_current_user_cookie
@@ -7,11 +8,15 @@ from app.schemas.user import UserInDB
 from app.db import post as post_db
 from app.db import user as user_db
 from app.db import comment as comment_db
+from app.services.audit_client import AuditServiceClient
 from urllib.parse import urlencode
 
+# Inizializza il router e il client verso il validatore audit
 router = APIRouter(tags=["pages"])
+audit_client = AuditServiceClient()
+logger = logging.getLogger("audit")
 
-
+# Risponde alle richieste GET per la home page
 @router.get("/", response_class=HTMLResponse)
 async def index(
     request: Request,
@@ -33,6 +38,7 @@ async def index(
         {"request": request}
     )
 
+# Risponde alle richieste GET per la barra laterale destra
 @router.get("/sidebar/right", response_class=HTMLResponse)
 def right_sidebar(
     request: Request,
@@ -60,6 +66,7 @@ def right_sidebar(
         }
     )
 
+# Risponde alle richieste GET per la pagina di ricerca
 @router.get("/search", response_class=HTMLResponse)
 async def search_page(
     request: Request,
@@ -163,6 +170,7 @@ async def search_page(
     # NON HX → render normale (già pulito se hai fatto redirect prima)
     return templates.TemplateResponse("search/search.html", context)
 
+# Risponde alle richieste GET per la pagina Discover
 @router.get("/discover", response_class=HTMLResponse)
 async def discover_page(
     request: Request,
@@ -225,6 +233,73 @@ async def discover_page(
         context
     )
 
+
+# ADMIN PAGES, controlla la validità della blockchain di audit e mostra la catena
+@router.get("/admin/audit", response_class=HTMLResponse)
+async def admin_audit_page(
+    request: Request,
+    current_user: UserInDB | None = Depends(optional_current_user_cookie),
+    user: str | None = None,
+    event_type: str | None = None,
+    start_time: str | None = None,
+    end_time: str | None = None,
+):
+    if not current_user or current_user.role != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    chain: dict = {"chain": []}
+    is_valid = False
+    remote_view: dict | None = None
+
+    logger.info(
+        "[AUDIT][ADMIN] Richiesta pagina audit: validator_enabled=%s user=%s event_type=%s start_time=%s end_time=%s",
+        audit_client.enabled,
+        user,
+        event_type,
+        start_time,
+        end_time,
+    )
+
+    if audit_client.enabled:
+        remote_view = await audit_client.get_chain_view(
+            user=user,
+            event_type=event_type,
+            start_time=start_time,
+            end_time=end_time,
+        )
+    if remote_view:
+        chain = remote_view.get("chain", {"chain": []})
+        is_valid = bool(remote_view.get("is_valid", False))
+        remote_chain_len = len(chain.get("chain", [])) if isinstance(chain, dict) else 0
+        logger.info(
+            "[AUDIT][ADMIN] Vista REMOTA ricevuta: is_valid=%s blocks=%d",
+            is_valid,
+            remote_chain_len,
+        )
+    else:
+        if audit_client.enabled:
+            logger.warning("[AUDIT][ADMIN] Vista REMOTA non disponibile: chain non disponibile nel server")
+        else:
+            logger.info("[AUDIT][ADMIN] Validator non configurato: chain non disponibile nel server")
+
+    context = {
+        "request": request,
+        "chain": chain,
+        "is_valid": is_valid,
+        "active_filters": {
+            "user": user,
+            "event_type": event_type,
+            "start_time": start_time,
+            "end_time": end_time,
+        },
+    }
+
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse("admin/partials/audit_content.html", context)
+
+    return templates.TemplateResponse("admin/audit.html", context)
+
+# Risponde alle richieste GET per l'endpoint vuoto
 @router.get("/empty", response_class=HTMLResponse)
 async def empty():
     """

@@ -1,0 +1,67 @@
+<div id="audit-content">
+<div class="w-full max-w-none bg-white rounded-xl shadow p-6 space-y-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold">Audit blockchain</h1>
+            <p class="text-sm text-gray-500">Osserva gli eventi registrati e verifica l’integrità della catena.</p>
+        </div>
+        <div class="px-3 py-2 rounded-full text-sm {% if is_valid %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+            {% if is_valid %}Catena valida{% else %}Catena non valida{% endif %}
+        </div>
+    </div>
+
+    <form class="grid gap-3 md:grid-cols-4" method="get" action="/admin/audit" hx-get="/admin/audit" hx-target="#audit-content" hx-swap="outerHTML" hx-push-url="true" hx-boost="false">
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Utente</label>
+            <input type="text" name="user" value="{{ active_filters.user or '' }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="es. alice" />
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Evento</label>
+            <input type="text" name="event_type" value="{{ active_filters.event_type or '' }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="es. get_request" />
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Da</label>
+            <input type="datetime-local" name="start_time" value="{{ active_filters.start_time or '' }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">A</label>
+            <input type="datetime-local" name="end_time" value="{{ active_filters.end_time or '' }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+        </div>
+        <div class="md:col-span-4 flex items-center gap-2">
+            <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">Filtra</button>
+            <a href="/admin/audit" class="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700" hx-get="/admin/audit" hx-target="#audit-content" hx-swap="outerHTML" hx-push-url="true" hx-boost="false">Reset</a>
+        </div>
+    </form>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-left border-collapse">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-3 py-2">Index</th>
+                    <th class="px-3 py-2">Evento</th>
+                    <th class="px-3 py-2">Timestamp</th>
+                    <th class="px-3 py-2">Validator</th>
+                    <th class="px-3 py-2">Utente</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for block in chain.chain %}
+                <tr class="border-t">
+                    <td class="px-3 py-2 font-mono">{{ block.index }}</td>
+                    <td class="px-3 py-2">{{ block.event_type }}</td>
+                    <td class="px-3 py-2">{{ block.timestamp }}</td>
+                    <td class="px-3 py-2">{{ block.validator }}</td>
+                    <td class="px-3 py-2 font-mono text-xs break-all">
+                        {% if block.payload and block.payload.user %}
+                            {{ block.payload.user }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
