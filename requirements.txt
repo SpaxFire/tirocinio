@@ -26,6 +26,7 @@ pwdlib==0.3.0
 pycparser==3.0
 pydantic==2.13.4
 paho-mqtt==2.1.0
+# Mosquitto broker is not a PyPI package. Install system package separately (e.g. apt install mosquitto).
 pydantic-extra-types==2.11.1
 pydantic-settings==2.14.1
 pydantic_core==2.46.4
