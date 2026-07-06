@@ -8,6 +8,7 @@
     <link href="{{ url_for('static', path='/css/output.css') }}" rel="stylesheet">
 
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <script src="https://unpkg.com/htmx-ext-sse@2.0.0/sse.js"></script>
     <!-- JS personalizzato per funzionalità specifiche -->
     <script src="{{ url_for('static', path='/js/app.js') }}" defer></script>
     <!-- Alpine.js per visualizzazione immagini -->
@@ -16,7 +17,7 @@
     <title>{% block title %}Social Network{% endblock %}</title>
 </head>
 
-<body hx-boost="true" class="bg-gray-100">
+<body class="bg-gray-100">
 
     <div class="max-w-7xl mx-auto flex gap-6 mt-6">
         <div id="flash-container" class="fixed top-5 right-5 z-[9999] space-y-2">
@@ -52,7 +53,15 @@
     </div>
 
     <!-- USER WIDGET FLOATING -->
-    <div id="user-widget" class="fixed bottom-6 right-6" hx-get="/auth/user-widget" hx-trigger="load">
+    <div class="fixed bottom-6 right-6 w-80 max-w-[90vw] flex flex-col gap-4 z-[9999]">
+
+        <!-- NOTIFICATIONS PANEL realizzato tramite SSE -->
+        <div id="notifications-panel" class="space-y-2 max-h-[60vh] overflow-y-auto" hx-ext="sse"
+            sse-connect="/notifications/stream" sse-swap="message" hx-swap="beforeend">
+        </div>
+
+        <div id="user-widget" hx-get="/auth/user-widget" hx-trigger="load">
+        </div>
     </div>
 
     <div id="modal-container"></div>

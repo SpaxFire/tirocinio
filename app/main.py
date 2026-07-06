@@ -10,11 +10,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.api.router import api_router
 from app.core.config import templates
 from app.core.security import optional_current_user_cookie
-from app.api.router import api_router
 from app.services.audit_blockchain import AuditBlockchain
 from app.services.audit_client import AuditServiceClient
+from app.services.mqtt_client import mqtt_notification_client
 from app.services.pending_queue import PendingAuditQueue
 
 # Configuriamo il logger scrivendo i messaggi di log su stdout con un formato specifico
@@ -142,6 +143,13 @@ async def startup_event() -> None:
     else:
         logger.info("[AUDIT] Validator remoto non configurato nel processo (AUDIT_VALIDATOR_URL vuota) — modalità coda locale persistente")
     asyncio.create_task(_flush_pending_events()) # Task in background per inviare periodicamente gli eventi pendenti al validator remoto
+    mqtt_notification_client.attach_loop(asyncio.get_running_loop())
+    mqtt_notification_client.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    mqtt_notification_client.stop()
 
 
 # STATIC

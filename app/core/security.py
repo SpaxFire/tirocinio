@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from datetime import timedelta
 from typing import Annotated
-from fastapi import Cookie, Depends, HTTPException
+from fastapi import Cookie, Depends, HTTPException, Request, status
 import jwt
 from pwdlib import PasswordHash
-from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.schemas.user import UserInDB
@@ -80,8 +79,14 @@ async def get_current_user_cookie(
     return user
 
 async def get_current_active_user(
-    current_user: Annotated[UserInDB, Depends(get_current_user)],
+    request: Request,
+    token: Annotated[str | None, Depends(oauth2_scheme)] = None,
+    access_token: str | None = Cookie(default=None),
 ) -> UserInDB:
+    if access_token:
+        current_user = await get_current_user_cookie(access_token)
+    else:
+        current_user = await get_current_user(token or "")
 
     if not current_user.is_active:
         raise HTTPException(status_code=403, detail="Inactive user")

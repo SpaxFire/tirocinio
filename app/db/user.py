@@ -32,6 +32,21 @@ def get_user_by_username(username: str) -> UserInDB | None:
             is_active=u.get("is_active", True),
         )
     
+def is_following(my_id: str | None, username: str | None) -> bool:
+    if not my_id or not username:
+        return False
+
+    query = """
+    MATCH (me:User {id: $my_id})
+    MATCH (target:User {username: $username})
+    RETURN EXISTS((me)-[:FOLLOWS]->(target)) AS following
+    """
+
+    with driver.session() as session:
+        record = session.run(query, my_id=my_id, username=username).single()
+        return bool(record["following"]) if record else False
+
+
 def get_user_profile_by_username(username: str, my_id: str | None) -> UserPublic | None:
     query = """
     MATCH (u:User {username: $username})

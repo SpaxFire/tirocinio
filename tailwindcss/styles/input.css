@@ -86,6 +86,10 @@
         @apply font-semibold text-red-600 bg-red-50 p-3 mb-3 rounded-full border-2 border-red-200;
     }
 
+    .msg-notification {
+        @apply font-semibold text-blue-600 bg-blue-50 p-3 mb-3 rounded-full border-2 border-blue-200 shadow-sm flex items-center gap-2 transition-all duration-300 hover:cursor-pointer hover:bg-blue-100;
+    }
+
     .img-hover {
         @apply ring-2 ring-transparent transition-all duration-200 hover:ring-blue-600;
     }
@@ -102,5 +106,17 @@
 
     .nav-item.active {
         @apply border-blue-600 text-blue-600;
+    }
+
+    /* Nascondi di default tutti i nuovi elementi arrivati via SSE nella lista */
+    #notifications-list .notification-item {
+        display: none;
+    }
+
+    /* Mostra l'elemento solo se il suo data-tab coincide con il data-active-tab del padre */
+    #notifications-list[data-active-tab="posts"] .notification-item[data-tab="posts"],
+    #notifications-list[data-active-tab="likes"] .notification-item[data-tab="likes"],
+    #notifications-list[data-active-tab="comments"] .notification-item[data-tab="comments"] {
+        display: block;
     }
 }

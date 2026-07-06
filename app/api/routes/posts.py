@@ -8,6 +8,7 @@ from app.core.security import require_user_cookie, optional_current_user_cookie
 from app.db import post as post_db
 from app.core.config import templates
 from app.schemas.user import UserInDB
+from app.services.mqtt_client import mqtt_notification_client
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -50,11 +51,21 @@ async def create_post(
 
         media_urls = await save_post_media(media)
 
-        post_db.create_post(
+        created_post = post_db.create_post(
             username=user.username,
             content=content,
             categories=category_list,
             media_urls=media_urls,
+        )
+
+        # Pubblicazione della notifica di creazione del post tramite MQTT
+        mqtt_notification_client.publish(
+            {
+                "type": "post_created",
+                "author": user.username,
+                "content": content,
+                "post_id": created_post.get("id"),
+            }
         )
 
         return HTMLResponse("""
@@ -324,7 +335,7 @@ async def post_detail(
     request: Request,
     post_id: str,
     user: UserInDB | None = Depends(optional_current_user_cookie),
-    hx_request: Annotated[Union[str, None], Header()] = None,
+    hx_request: Annotated[Union[str, None], Header(alias="HX-Request")] = None,
 ):
     post = post_db.get_post_by_id(post_id, user.id if user else None)
 
@@ -350,6 +361,18 @@ async def like_post(
     user: UserInDB = Depends(require_user_cookie),
 ):
     liked, like_count = post_db.toggle_like(post_id, user.username)
+    post = post_db.get_post_by_id(post_id, user.id)
+
+    if liked:
+        # Pubblicazione della notifica di like tramite MQTT
+        mqtt_notification_client.publish(
+            {
+                "type": "post_liked",
+                "author": user.username,
+                "content": post["author"],
+                "post_id": post_id,
+            }
+        )
 
     return templates.TemplateResponse(
         "posts/partials/like_button.html",
