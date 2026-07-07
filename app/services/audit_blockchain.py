@@ -246,7 +246,7 @@ class AuditBlockchain:
 
             if user and block_user != user:
                 continue
-            if event_type and block_event_type != event_type:
+            if event_type and event_type not in block_event_type:
                 continue
             if start_dt and block_dt and block_dt < start_dt:
                 continue

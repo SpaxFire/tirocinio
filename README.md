@@ -3,35 +3,56 @@
 # Social Network Web App - Progetto di Tesi 🎓
 
 ## 📖 Descrizione
-Questo repository contiene il codice sorgente di un'applicazione web completa di tipo social network, realizzata come progetto per la Tesi di Laurea Triennale in Informatica all'Università degli Studi di Ferrara. 
+Questo branch contiene il codice sorgente dell'espansione all'applicazione web di social network, realizzata da Luca Artusio (MAT. 343864) e Elia Lini (MAT. 344967) come progetto dell'insegnamento di Sistemi Distribuiti e Decentralizzati.
 
-L'obiettivo principale del progetto è fornire una piattaforma interattiva che consenta agli utenti di interagire attraverso la pubblicazione di contenuti testuali e multimediali, la gestione di relazioni sociali (come i meccanismi di "follow" e "mi piace") e l'organizzazione delle informazioni in categorie. Il sistema si distingue per l'impiego di un database a grafo, ideale per modellare e interrogare le complesse dinamiche relazionali tipiche dei social network, e per l'utilizzo di un approccio server-rendered moderno ed efficiente.
+L'obiettivo principale del progetto è integrare i serivizi di audit-log, per la creazione di log immutabili e tracciabili tramite blockchain, e MQTT, per la gestione delle notifiche in tempo reale, il tutto containerizzato tramite docker.
 
 ## 🛠️ Tecnologie Utilizzate
 
-Il progetto è stato sviluppato adottando tecnologie moderne e complementari per garantire elevate prestazioni e un'ottima User Experience:
+### Backend
+- **FastAPI** (Python) — API performanti, tipizzazione forte e documentazione automatica
 
-* **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python) - Framework performante scelto per la tipizzazione forte, la gestione rapida delle richieste HTTP e la facile strutturazione in router e servizi.
-* **Database:** [Neo4j](https://neo4j.com/) - Database a grafo utilizzato per gestire in modo naturale ed efficiente entità e relazioni complesse (es. *Utente segue Utente*, *Utente mette like a Post*) tramite query Cypher.
-* **Frontend:** [HTMX](https://htmx.org/) e [Tailwind CSS](https://tailwindcss.com/) con template HTML (Jinja2) - HTMX abilita interazioni dinamiche e aggiornamenti parziali del DOM tramite semplici attributi HTML (es. infinite scroll, active search), mentre Tailwind CSS garantisce una stilizzazione modulare, reattiva e coerente con un approccio utility-first.
+### Database
+- **Neo4j** — Database a grafo per relazioni complesse (follow, like, ecc.)
 
-## ⚙️ Architettura
+### Frontend
+- **HTMX** + **Jinja2** — Interazioni dinamiche senza scrivere molto JavaScript
+- **Tailwind CSS** — Styling moderno e responsive
 
-L'applicazione è strutturata secondo un solido **Modello a Tre Strati (Three-Tier Architecture)**:
-1. **Presentation Layer (Frontend):** Gestisce l'interfaccia utente in modo dichiarativo e dinamico, minimizzando l'uso di JavaScript custom.
-2. **Application Layer (Business Logic):** API modulari in FastAPI che elaborano le richieste, gestiscono l'autenticazione, la validazione dei file media e orchestrano l'interazione con il database.
-3. **Data Layer:** Persistenza dei dati affidata a Neo4j, che ottimizza le query trasversali sulle reti sociali rispetto ai classici database relazionali.
+### DevOps
+- **Docker** + **Docker Compose**
+- **Mosquitto** (MQTT broker)
+- Audit trail con firma crittografica
+
+## ⚙️ Architettura Aggiornata
+
+L'applicazione segue un'architettura **Three-Tier** estesa con componenti distribuiti:
+
+1. **Presentation Layer:** HTMX + templates Jinja2.
+2. **Application Layer:** FastAPI con middleware per audit, validazione e publishing MQTT.
+3. **Data Layer:** Neo4j per i dati relazionali.
+4. **Real-time Layer:** MQTT Broker (Mosquitto) + client Paho per notifiche push e subscriber.
+5. **Audit Layer:** Blockchain validator separato (servizio FastAPI) che registra transazioni in un file JSON chain immutabile.
+6. **Notification Broker:** Fallback locale (in-memory + queue) per notifiche quando MQTT non è disponibile.
+
+**Flusso tipico di un evento (es. nuovo post):**
+- FastAPI valida e salva su Neo4j.
+- Middleware genera evento audit → invia al Validator (blockchain).
+- Pubblicazione su topic MQTT → notifiche real-time ai client connessi (via HTMX updates).
+- Fallback su NotificationBroker locale.
 
 ## ✨ Funzionalità Implementate
 
-* 🔐 **Registrazione e Autenticazione:** Sistema di Login/Registrazione sicuro basato su token JWT gestiti lato server tramite cookie `HttpOnly`.
-* 📝 **Operazioni CRUD sui Post:** Possibilità di creare, leggere, aggiornare ed eliminare post, con supporto al caricamento di file multimediali (immagini fino a 5MB) e classificazione tramite categorie.
-* 💬 **Sistema di Commenti:** Interazioni dirette sotto i post tramite operazioni CRUD dedicate ai commenti.
-* ❤️ **Interazioni Sociali (Like e Follow):** Sistemi nativi per mettere "Mi piace" ai contenuti e seguire altri profili per aggiornare dinamicamente il proprio feed.
-* 🧭 **Pagina Scopri e Infinite Scroll:** Sezione dedicata all'esplorazione dei contenuti con caricamento continuo e dinamico (Infinite Scroll) implementato tramite HTMX per una navigazione fluida.
-* 🔍 **Sistema di Ricerca (Active Search):** Motore di ricerca reattivo integrato con HTMX per trovare post, utenti e commenti con aggiornamento istantaneo dei risultati.
-* ⚙️ **Impostazioni Account e Modali:** Realizzazione di operazioni CRUD degli account (l'eliminazione consiste nella disattivazione dell'account, senza rimozione dal database) e gestione fluida delle informazioni personali (profilo, email, password) modificabili tramite finestre modali dinamiche che non interrompono l'esperienza di navigazione.
-* 🛡️ **Gestione Ruoli e Permessi:** Distinzione chiara tra ruoli `Utente` e `Amministratore`, con controlli di autorizzazione per proteggere le rotte e permettere azioni privilegiate agli admin (es. gestione degli account altrui).
+- Registrazione e Login sicuri (JWT + HttpOnly cookies)
+- CRUD Post con caricamento immagini (max 5MB)
+- Sistema di Like e Follow
+- Commenti annidati
+- Feed dinamico con **Infinite Scroll**
+- Ricerca attiva (active search)
+- Pagine profilo e impostazioni account
+- Ruoli Utente / Amministratore
+- Sistema di **Audit Trail** con catena di blocchi firmati
+- Containerizzazione completa
 
 ## ▶️ Setup e avvio su qualsiasi PC
 
@@ -39,96 +60,61 @@ Questa sezione descrive i passaggi minimi per installare e avviare il progetto d
 
 Ambiente di riferimento: Linux.
 
+## 🚀 Avvio Rapido con Docker (Consigliato)
+
 ### Prerequisiti
+- Docker Engine
+- Docker Compose (plugin `docker compose`)
 
-1. Python 3.10+ installato
-2. Node.js 24+ e npm 10+ installati
-3. Git installato
+### 1. Clona il repository
 
-### 1) Clona il repository
+    bash
+    git clone https://github.com/SpaxFire/tirocinio.git
+    cd tirocinio
+    git checkout docker
 
-	git clone https://github.com/SpaxFire/tirocinio
-	cd tirocinio
-    git checkout Progetto_Sistemi
-    git pull origin Progetto_Sistemi
+### 2. Configura le variabili d'ambiente
 
-### 2) Installa Node.js 24 (consigliato con nvm)
+    bash
+    cp .env.docker.example .env.docker
 
-	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-	export NVM_DIR="$HOME/.nvm"
-	[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-	nvm install 24
-	nvm use 24
-	node -v
-	npm -v
 
-### 3) Crea e attiva l'ambiente virtuale Python
+### 3. Avvia i servizi
 
-	python3 -m venv .venv
-	source .venv/bin/activate
+    bash
+### Avvio standard (backend + validator + mosquitto)
+    docker compose up -d --build
 
-### 4) Installa le dipendenze Python
+**N.B.** è necessario configurare correttamente le variabili per il servizio di neo4j nel file `.env.docker` (con quelle corrispondenti al server remoto).
 
-	pip install -r requirements.txt
+### Avvio anche Neo4j locale (opzionale)
+    docker compose --profile local-db up -d
 
-### 5) Installa le dipendenze frontend
+**N.B.** è necessario che i parametri per il servizio di neo4j siano correttamente impostati nel file `.env.docker` (come nel file `.env.docker.example`).
 
-	npm install
 
-### 6) Avvia il backend FastAPI (terminale 1)
+### Stop e cleanup
 
-	source .venv/bin/activate
-	export NEO4J_URI=bolt://127.0.0.1:7687
-	export NEO4J_USER=neo4j
-	export NEO4J_PASSWORD=neo4jpassword
-	fastapi dev app/main.py
+Stop:
 
-### 7) Avvia Tailwind in watch (terminale 2)
+	docker compose down
 
-	npm run tw:watch
+Stop + rimozione volumi (attenzione: cancella i dati persistiti nei volumi Docker):
 
-Se usi `nvm`, puoi allineare automaticamente la versione Node richiesta:
+	docker compose down -v
 
-	nvm use
 
-### 8) Apri l'app nel browser
+### 4. Accedi all'applicazione
 
-	http://127.0.0.1:8000
+- **Web App**: http://localhost:8000
+- **Neo4j Browser** (se avviato): http://localhost:7474 (user: `neo4j`, password: vedi `.env.docker`)
+- **Validator Health**: http://localhost:8001/internal/audit/health
 
-### Nota importante
-
-Ogni nuovo terminale richiede la riattivazione dell'ambiente virtuale prima dei comandi Python:
-
-	source .venv/bin/activate
-
-## Audit separato (Server + Validator)
+## Audit separato (Server + Validator) - Elia Lini (MAT. 344967)
 
 Da questa versione (separata da progetto originale di Luca) puoi eseguire la validazione audit come servizio separato.
 
 L'avvio precedente con solo server web continua a funzionare: se `AUDIT_VALIDATOR_URL` non e impostata, il server usa automaticamente la coda locale come fallback.
-
-### Avvio in locale con 2 processi
-
-Terminale A (validator):
-
-	. .venv/bin/activate
-	export AUDIT_TX_SIGNING_SECRET=tx-secret-dev
-	export AUDIT_BLOCK_SIGNING_SECRET=block-secret-dev
-	python -m uvicorn app.validator_main:validator_app --host 127.0.0.1 --port 8001 --reload
-
-Terminale B (server web):
-
-	. .venv/bin/activate
-	# Se usi Neo4j locale:
-	export NEO4J_URI=bolt://127.0.0.1:7687
-	export NEO4J_USER=neo4j
-	export NEO4J_PASSWORD=neo4jpassword
-	# Se usi Neo4j online (Aura), sostituisci i valori sopra con quelli remoti.
-	# Esempio: export NEO4J_URI=neo4j+s://<instance-id>.databases.neo4j.io
-	export AUDIT_VALIDATOR_URL=http://127.0.0.1:8001
-	export AUDIT_TX_SIGNING_SECRET=tx-secret-dev
-	export AUDIT_BLOCK_SIGNING_SECRET=block-secret-dev
-	python -m fastapi dev app/main.py
 
 ### Come funziona il validatore
 
@@ -156,71 +142,6 @@ Compatibilita con versioni precedenti:
 
 * `AUDIT_SIGNING_SECRET` resta supportata come fallback legacy (se valorizzata, viene usata per entrambi i flussi).
 
-## Containerizzazione con Docker e Docker Compose
-
-Il progetto include ora una configurazione completa per avviare i servizi principali in container:
-
-* backend FastAPI (`backend`)
-* database Neo4j locale opzionale (`neo4j`, profilo `local-db`)
-* broker MQTT Mosquitto (`mqtt-broker`)
-* servizio validator audit (`audit-validator`)
-
-### Prerequisiti
-
-1. Docker Engine installato
-2. Docker Compose plugin (`docker compose`) installato
-
-### File aggiunti
-
-* `Dockerfile`: immagine applicativa Python per backend/validator
-* `docker-compose.yml`: orchestrazione multi-servizio
-* `.env.docker.example`: variabili ambiente di riferimento per Compose
-* `infra/mosquitto/mosquitto.conf`: configurazione broker MQTT
-
-### Avvio rapido
-
-1) Copia il file di ambiente Docker:
-
-	cp .env.docker.example .env.docker
-
-2) Avvia tutti i servizi:
-
-	docker compose up -d --build
-
-	# Opzionale: se vuoi anche Neo4j locale nel compose
-	docker compose --profile local-db up -d
-
-3) Verifica lo stato:
-
-	docker compose ps
-
-4) Apri i servizi:
-
-* App web: `http://127.0.0.1:8000`
-* Validator audit: `http://127.0.0.1:8001/internal/audit/health`
-
-Se vuoi avviare anche Neo4j locale (in alternativa a un Neo4j remoto), usa:
-
-	docker compose --profile local-db up -d
-
-In quel caso, Neo4j Browser sarà disponibile su `http://127.0.0.1:7474`.
-
-### Stop e cleanup
-
-Stop:
-
-	docker compose down
-
-Stop + rimozione volumi (attenzione: cancella i dati persistiti nei volumi Docker):
-
-	docker compose down -v
-
-### Note architetturali
-
-* Il backend usa `AUDIT_VALIDATOR_URL=http://audit-validator:8001` sulla rete Docker interna.
-* Neo4j e configurato via env (`NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`) e ora non dipende piu da credenziali hardcoded.
-* I file di audit e upload restano persistenti tramite bind mount sulle cartelle locali `data/` e `static/uploads/`.
-
 ### Endpoint del validatore
 
 * `GET /internal/audit/health`: healthcheck del servizio validatore.
@@ -230,3 +151,29 @@ Stop + rimozione volumi (attenzione: cancella i dati persistiti nei volumi Docke
 ### Verifica lato admin
 
 La pagina admin `/admin/audit` prova a leggere la catena dal validatore remoto quando configurato; in caso di fallback usa la vista locale. In entrambi i casi viene mostrato lo stato di validita (`is_valid`) della chain.
+
+## MQTT per notifiche real-time - Luca Artusio (MAT. 343864)
+
+
+
+## Containerizzazione con Docker e Docker Compose
+
+Il progetto include ora una configurazione completa per avviare i servizi principali in container:
+
+* backend FastAPI (`backend`)
+* database Neo4j locale opzionale (`neo4j`, profilo `local-db`)
+* broker MQTT Mosquitto (`mqtt-broker`)
+* servizio validator audit (`audit-validator`)
+
+### File pertinenti
+
+* `Dockerfile`: immagine applicativa Python per backend/validator
+* `docker-compose.yml`: orchestrazione multi-servizio
+* `.env.docker.example`: variabili ambiente di riferimento per Compose
+* `infra/mosquitto/mosquitto.conf`: configurazione broker MQTT
+
+### Note architetturali
+
+* Il backend usa `AUDIT_VALIDATOR_URL=http://audit-validator:8001` sulla rete Docker interna.
+* Neo4j e configurato via env (`NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`) e ora non dipende piu da credenziali hardcoded.
+* I file di audit e upload restano persistenti tramite bind mount sulle cartelle locali `data/` e `static/uploads/`.

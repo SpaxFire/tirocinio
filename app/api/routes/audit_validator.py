@@ -83,6 +83,7 @@ async def get_chain(
         start_time=start_time,
         end_time=end_time,
     )
+    filtered_chain.reverse()
     is_valid = audit_blockchain.validate_chain()
     logger.info(
         "[AUDIT] Validator chain response: is_valid=%s filtered_blocks=%d total_blocks=%d",
