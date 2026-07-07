@@ -1,0 +1,88 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tirocinio-backend
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+      audit-validator:
+        condition: service_started
+    env_file:
+      - .env.docker
+    environment:
+      MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mqtt-broker}
+      MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
+      MQTT_TOPIC: ${MQTT_TOPIC:-notifications.created}
+      AUDIT_VALIDATOR_URL: ${AUDIT_VALIDATOR_URL:-http://audit-validator:8001}
+      AUDIT_CHAIN_PATH: ${AUDIT_CHAIN_PATH:-/app/data/audit_chain.json}
+      AUDIT_PENDING_PATH: ${AUDIT_PENDING_PATH:-/app/data/pending_audit_events.json}
+      AUDIT_TX_SIGNING_SECRET: ${AUDIT_TX_SIGNING_SECRET:-tx-secret-dev}
+      AUDIT_BLOCK_SIGNING_SECRET: ${AUDIT_BLOCK_SIGNING_SECRET:-block-secret-dev}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./static/uploads:/app/static/uploads
+    restart: unless-stopped
+
+  audit-validator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tirocinio-audit-validator
+    command: ["python", "-m", "uvicorn", "app.validator_main:validator_app", "--host", "0.0.0.0", "--port", "8001"]
+    env_file:
+      - .env.docker
+    environment:
+      AUDIT_CHAIN_PATH: ${AUDIT_CHAIN_PATH:-/app/data/audit_chain.json}
+      AUDIT_TX_SIGNING_SECRET: ${AUDIT_TX_SIGNING_SECRET:-tx-secret-dev}
+      AUDIT_BLOCK_SIGNING_SECRET: ${AUDIT_BLOCK_SIGNING_SECRET:-block-secret-dev}
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:5.26
+    container_name: tirocinio-neo4j
+    profiles:
+      - local-db
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-neo4jpassword}
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 512m
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_plugins:/plugins
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u ${NEO4J_USER:-neo4j} -p ${NEO4J_PASSWORD:-neo4jpassword} 'RETURN 1' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0
+    container_name: tirocinio-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_plugins:
+  mosquitto_data:
+  mosquitto_log:

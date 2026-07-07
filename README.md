@@ -78,6 +78,9 @@ Ambiente di riferimento: Linux.
 ### 6) Avvia il backend FastAPI (terminale 1)
 
 	source .venv/bin/activate
+	export NEO4J_URI=bolt://127.0.0.1:7687
+	export NEO4J_USER=neo4j
+	export NEO4J_PASSWORD=neo4jpassword
 	fastapi dev app/main.py
 
 ### 7) Avvia Tailwind in watch (terminale 2)
@@ -116,6 +119,12 @@ Terminale A (validator):
 Terminale B (server web):
 
 	. .venv/bin/activate
+	# Se usi Neo4j locale:
+	export NEO4J_URI=bolt://127.0.0.1:7687
+	export NEO4J_USER=neo4j
+	export NEO4J_PASSWORD=neo4jpassword
+	# Se usi Neo4j online (Aura), sostituisci i valori sopra con quelli remoti.
+	# Esempio: export NEO4J_URI=neo4j+s://<instance-id>.databases.neo4j.io
 	export AUDIT_VALIDATOR_URL=http://127.0.0.1:8001
 	export AUDIT_TX_SIGNING_SECRET=tx-secret-dev
 	export AUDIT_BLOCK_SIGNING_SECRET=block-secret-dev
@@ -146,6 +155,71 @@ In questo modo non perdi eventi anche in caso di problemi temporanei di rete o s
 Compatibilita con versioni precedenti:
 
 * `AUDIT_SIGNING_SECRET` resta supportata come fallback legacy (se valorizzata, viene usata per entrambi i flussi).
+
+## Containerizzazione con Docker e Docker Compose
+
+Il progetto include ora una configurazione completa per avviare i servizi principali in container:
+
+* backend FastAPI (`backend`)
+* database Neo4j locale opzionale (`neo4j`, profilo `local-db`)
+* broker MQTT Mosquitto (`mqtt-broker`)
+* servizio validator audit (`audit-validator`)
+
+### Prerequisiti
+
+1. Docker Engine installato
+2. Docker Compose plugin (`docker compose`) installato
+
+### File aggiunti
+
+* `Dockerfile`: immagine applicativa Python per backend/validator
+* `docker-compose.yml`: orchestrazione multi-servizio
+* `.env.docker.example`: variabili ambiente di riferimento per Compose
+* `infra/mosquitto/mosquitto.conf`: configurazione broker MQTT
+
+### Avvio rapido
+
+1) Copia il file di ambiente Docker:
+
+	cp .env.docker.example .env.docker
+
+2) Avvia tutti i servizi:
+
+	docker compose up -d --build
+
+	# Opzionale: se vuoi anche Neo4j locale nel compose
+	docker compose --profile local-db up -d
+
+3) Verifica lo stato:
+
+	docker compose ps
+
+4) Apri i servizi:
+
+* App web: `http://127.0.0.1:8000`
+* Validator audit: `http://127.0.0.1:8001/internal/audit/health`
+
+Se vuoi avviare anche Neo4j locale (in alternativa a un Neo4j remoto), usa:
+
+	docker compose --profile local-db up -d
+
+In quel caso, Neo4j Browser sarà disponibile su `http://127.0.0.1:7474`.
+
+### Stop e cleanup
+
+Stop:
+
+	docker compose down
+
+Stop + rimozione volumi (attenzione: cancella i dati persistiti nei volumi Docker):
+
+	docker compose down -v
+
+### Note architetturali
+
+* Il backend usa `AUDIT_VALIDATOR_URL=http://audit-validator:8001` sulla rete Docker interna.
+* Neo4j e configurato via env (`NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`) e ora non dipende piu da credenziali hardcoded.
+* I file di audit e upload restano persistenti tramite bind mount sulle cartelle locali `data/` e `static/uploads/`.
 
 ### Endpoint del validatore
 
