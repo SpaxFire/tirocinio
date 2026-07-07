@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 
 from app.core.env import load_app_env
 
@@ -129,8 +130,10 @@ async def _flush_pending_events(interval_seconds: int = 30) -> None:
 # Eventi di startup dell'applicazione
 @app.on_event("startup")
 async def startup_event() -> None:
+    log_level_name = os.getenv("APP_LOG_LEVEL", "INFO").upper()
+    log_level = getattr(logging, log_level_name, logging.INFO)
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=log_level,
         format="%(asctime)s [%(levelname)s] %(message)s",
         datefmt="%H:%M:%S",
     )

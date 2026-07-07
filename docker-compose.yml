@@ -12,6 +12,7 @@ services:
     env_file:
       - .env.docker
     environment:
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
       MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mqtt-broker}
       MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
       MQTT_TOPIC: ${MQTT_TOPIC:-notifications.created}
@@ -32,7 +33,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: tirocinio-audit-validator
-    command: ["python", "-m", "uvicorn", "app.validator_main:validator_app", "--host", "0.0.0.0", "--port", "8001"]
+    command: ["python", "-m", "uvicorn", "app.validator_main:validator_app", "--host", "0.0.0.0", "--port", "8001", "--no-access-log", "--log-level", "info"]
     env_file:
       - .env.docker
     environment:
