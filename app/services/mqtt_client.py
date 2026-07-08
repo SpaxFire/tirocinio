@@ -71,6 +71,7 @@ class MqttNotificationClient:
         if self._client is not None and self._connected:
             try:
                 self._client.publish(target_topic, json.dumps(payload), qos=1, retain=False)
+                logger.info("MQTT broker online: messaggio pubblicato con successo")
                 return
             except Exception as exc:
                 logger.warning("MQTT publish failed: %s", exc)
@@ -78,6 +79,7 @@ class MqttNotificationClient:
         loop = self._loop or asyncio.get_running_loop()
         # Se il client MQTT non è connesso, pubblica la notifica direttamente tramite il broker di notifiche
         loop.create_task(notification_broker.publish(payload, topic=target_topic))
+        logger.info("MQTT broker offline: fallback su broker di notifiche locale")
 
     def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
         self._connected = True

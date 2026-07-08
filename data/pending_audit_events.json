@@ -1,1 +1,134 @@
-[]
+[
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/notifications/stream",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/notifications/stream",
+      "status_code": 200,
+      "user": "SpaxFire",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/posts/09551249-fbc5-490c-9780-bbc8c0d2aaf1",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/static/images/default_avatar.png",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/static/css/output.css",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/static/js/app.js",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/posts/09551249-fbc5-490c-9780-bbc8c0d2aaf1/comments",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {
+        "source": "detail"
+      }
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/auth/user-widget",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/sidebar/right",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/notifications/stream",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "get_request",
+    "payload": {
+      "method": "GET",
+      "path": "/favicon.ico",
+      "status_code": 404,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "post_request",
+    "payload": {
+      "method": "POST",
+      "path": "/posts/09551249-fbc5-490c-9780-bbc8c0d2aaf1/likes",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  },
+  {
+    "event_type": "post_request",
+    "payload": {
+      "method": "POST",
+      "path": "/posts/09551249-fbc5-490c-9780-bbc8c0d2aaf1/likes",
+      "status_code": 200,
+      "user": "admin",
+      "query_params": {}
+    }
+  }
+]
