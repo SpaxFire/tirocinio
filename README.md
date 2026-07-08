@@ -1,6 +1,4 @@
-## Luca Artusio MAT. 343864
-
-# Social Network Web App - Progetto di Tesi 🎓
+# Social Network Web App
 
 ## 📖 Descrizione
 Questo branch contiene il codice sorgente dell'espansione all'applicazione web di social network, realizzata da Luca Artusio (MAT. 343864) e Elia Lini (MAT. 344967) come progetto dell'insegnamento di Sistemi Distribuiti e Decentralizzati.
@@ -92,6 +90,9 @@ Ambiente di riferimento: Linux.
 
 **N.B.** è necessario che i parametri per il servizio di neo4j siano correttamente impostati nel file `.env.docker` (come nel file `.env.docker.example`).
 
+### Avvio dei singoli servizi (opzionale)
+
+    docker compose up -d --build --no-deps backend
 
 ### Stop e cleanup
 
@@ -154,7 +155,33 @@ La pagina admin `/admin/audit` prova a leggere la catena dal validatore remoto q
 
 ## MQTT per notifiche real-time - Luca Artusio (MAT. 343864)
 
+In questa espansione, MQTT è utilizzato per abilitare notifiche asincrone e real-time verso gli utenti connessi, riducendo il polling lato client e migliorando la reattività dell'interfaccia.
 
+Il backend FastAPI pubblica eventi applicativi dopo le operazioni principali (es. like, commenti, nuovi post), usando Mosquitto come broker nella rete Docker (mqtt-broker); i client subscriber ricevono il messaggio e aggiornano la frontend tramite endpoint/partial HTMX.
+
+### Come funziona (flusso di una notifica MQTT)
+1. L’utente esegue un’azione tramite una rotta FastAPI.
+2. La rotta è registrata nel router centrale `app/api/router.py` ed eseguita nel backend (`app/main.py` include `api_router`).
+3. La logica dati aggiorna Neo4j tramite i moduli `app/db/*` (es. `app/db/post.py`, `app/db/comment.py`).
+4. Dopo la persistenza, il modulo `mqtt_client` crea un evento notifica e lo pubblica sul broker MQTT.
+5. Il modulo `mqtt_subscriber` riceve l’evento e lo invia al `notification_broker` locale, il quale lo distribuisce agli endpoint SSE/HTMX che aggiornano la UI.
+
+Se MQTT non è disponibile, il modulo `mqtt_client` utilizza il fallback locale, contattando direttamente il `notification_broker` per non perdere l'evento.
+
+### Variabili ambiente MQTT (riferimento operativo)
+
+Nel branch Docker, la configurazione passa da `.env.docker` / `.env.docker.example` e `docker-compose.yml`.  
+Le variabili chiave da documentare/usare sono:
+
+* `MQTT_BROKER_HOST` (in Docker: `mqtt-broker`)
+* `MQTT_BROKER_PORT` (tipicamente `1883`)
+* `MQTT_USERNAME` e `MQTT_PASSWORD` (se autenticazione broker attiva)
+* `MQTT_TOPIC` (es. `notifications.created`)
+
+### Endpoint notifiche real-time
+
+* `GET /notifications`: mostra la pagina con lo storico delle notifiche filtrato per tab e utente seguito, usando il contenuto salvato nel broker in memoria.
+* `GET /notifications/stream`: apre uno stream SSE che invia al browser le nuove notifiche in tempo reale, aggiornando la UI senza ricaricare la pagina.
 
 ## Containerizzazione con Docker e Docker Compose
 
