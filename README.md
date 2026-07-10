@@ -176,7 +176,7 @@ Le variabili chiave da documentare/usare sono:
 * `MQTT_BROKER_HOST` (in Docker: `mqtt-broker`)
 * `MQTT_BROKER_PORT` (tipicamente `1883`)
 * `MQTT_USERNAME` e `MQTT_PASSWORD` (se autenticazione broker attiva)
-* `MQTT_TOPIC` (es. `notifications.created`)
+* `MQTT_TOPIC` (default: `notifications.created`)
 
 ### Endpoint notifiche real-time
 
