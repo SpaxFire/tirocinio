@@ -17,9 +17,8 @@ services:
       MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
       MQTT_TOPIC: ${MQTT_TOPIC:-notifications.created}
       AUDIT_VALIDATOR_URL: ${AUDIT_VALIDATOR_URL:-http://audit-validator:8001}
-      AUDIT_PENDING_PATH: ${AUDIT_PENDING_PATH:-/app/backend_pending/pending_audit_events.json}
+      AUDIT_PENDING_PATH: /app/backend_pending/pending_audit_events.json
       AUDIT_TX_SIGNING_SECRET: ${AUDIT_TX_SIGNING_SECRET:-tx-secret-dev}
-      AUDIT_BLOCK_SIGNING_SECRET: ${AUDIT_BLOCK_SIGNING_SECRET_BACKEND:-backend-not-used-for-block-signing}
     ports:
       - "8000:8000"
     volumes:

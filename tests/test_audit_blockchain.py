@@ -62,11 +62,7 @@ def test_invalid_signature_is_rejected(tmp_path):
 
 # Test Middleware intercetta la richiesta HTTP, identifica l’utente e registra l’evento nella audit chain.
 def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
-    # instanzia un AuditBlockchain temporaneo per il test
-    chain_path = tmp_path / "audit_chain.json"
-    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
     pending = PendingAuditQueue(queue_path=tmp_path / "pending.json")
-    monkeypatch.setattr(main, "audit_blockchain", blockchain) # sostituisce l'istanza di AuditBlockchain nel modulo main con quella creata per il test
     monkeypatch.setattr(main, "pending_queue", pending)
     
     # disabilita il client di audit per il test per evitare chiamate esterne a validator remoto
@@ -85,9 +81,6 @@ def test_middleware_logs_http_method_based_event_type(tmp_path, monkeypatch):
     response = client.get("/items") # get
 
     assert response.status_code == 200
-    stored = json.loads(chain_path.read_text())
-    # Il fallback senza validator deve lasciare intatta la chain locale
-    assert len(stored["chain"]) == 1
     # L'evento deve finire nella coda persistente
     queued = pending.pop_all()
     assert len(queued) == 1

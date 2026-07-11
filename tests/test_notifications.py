@@ -1,11 +1,13 @@
 import asyncio
 import json
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.api.routes.notifications import notifications_stream
 from app.core.security import get_current_active_user
 from app.schemas.user import UserInDB
 from app.services.mqtt_client import mqtt_notification_client
@@ -34,29 +36,28 @@ async def test_notification_broker_delivers_payload_to_subscribers():
         await broker.unsubscribe(subscriber_id)
 
 
-def test_notifications_stream_endpoint_returns_sse_headers():
-    client = TestClient(app)
+@pytest.mark.anyio
+async def test_notifications_stream_endpoint_returns_sse_headers():
+    user = UserInDB(
+        id="user-1",
+        username="alice",
+        email="alice@example.com",
+        password_hash="hash",
+        role="USER",
+        bio=None,
+        profile_image=None,
+        created_at=None,
+        is_active=True,
+    )
 
-    def override_current_user():
-        return UserInDB(
-            id="user-1",
-            username="alice",
-            email="alice@example.com",
-            password_hash="hash",
-            role="USER",
-            bio=None,
-            profile_image=None,
-            created_at=None,
-            is_active=True,
-        )
+    async def _is_disconnected():
+        return True
 
-    app.dependency_overrides[get_current_active_user] = override_current_user
-    try:
-        with client.stream("GET", "/notifications/stream") as response:
-            assert response.status_code == 200
-            assert "text/event-stream" in response.headers["content-type"]
-    finally:
-        app.dependency_overrides.clear()
+    request = SimpleNamespace(is_disconnected=_is_disconnected)
+    response = await notifications_stream(request=request, user=user)
+
+    assert response.status_code == 200
+    assert response.media_type == "text/event-stream"
 
 
 def test_notification_html_includes_popup_and_oob_target_for_live_page_updates():

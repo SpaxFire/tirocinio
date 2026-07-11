@@ -9,6 +9,45 @@ from typing import Any
 
 logger = logging.getLogger("audit")
 
+
+class AuditTransactionSigner:
+
+    # Signer dedicato al backend: firma solo le transazioni server -> validator.
+    # Non carica/salva chain e non usa il segreto di firma dei blocchi.
+    def __init__(
+        self,
+        transaction_signing_secret: str | None = None,
+        signing_secret: str | None = None,
+    ):
+        legacy_secret = signing_secret or os.getenv("AUDIT_SIGNING_SECRET")
+        self.transaction_signing_secret = (
+            transaction_signing_secret
+            or os.getenv("AUDIT_TX_SIGNING_SECRET")
+            or legacy_secret
+            or "fastapi-audit-tx-secret"
+        )
+
+    def _canonical_json(self, value: Any) -> str:
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+    def _sign_payload(self, payload: dict[str, Any]) -> str:
+        return hmac.new(
+            self.transaction_signing_secret.encode("utf-8"),
+            self._canonical_json(payload).encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+    def create_transaction(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+        timestamp = datetime.now(timezone.utc).isoformat()
+        transaction = {
+            "event_type": event_type,
+            "payload": payload,
+            "timestamp": timestamp,
+            "server_id": "fastapi-server",
+        }
+        transaction["signature"] = self._sign_payload(transaction)
+        return transaction
+
 # classe AuditBlockchain per la gestione della blockchain di audit
 class AuditBlockchain:
 

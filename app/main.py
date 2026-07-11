@@ -14,7 +14,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.api.router import api_router
 from app.core.config import templates
 from app.core.security import optional_current_user_cookie
-from app.services.audit_blockchain import AuditBlockchain
+from app.services.audit_blockchain import AuditTransactionSigner
 from app.services.audit_client import AuditServiceClient
 from app.services.mqtt_client import mqtt_notification_client
 from app.services.pending_queue import PendingAuditQueue
@@ -22,9 +22,9 @@ from app.services.pending_queue import PendingAuditQueue
 # Configuriamo il logger scrivendo i messaggi di log su stdout con un formato specifico
 logger = logging.getLogger("audit")
 
-# Inizializziamo la blockchain di audit e le app FastAPI (servizio principale, servizio di audit)
+# Inizializziamo l'app FastAPI e il signer transazioni (senza chain locale lato backend)
 app = FastAPI()
-audit_blockchain = AuditBlockchain()
+audit_signer = AuditTransactionSigner()
 
 # Inizializziamo il client di audit e la coda pendente
 audit_client = AuditServiceClient()
@@ -60,7 +60,7 @@ class CurrentUserMiddleware(BaseHTTPMiddleware):
         # In caso di fallimento, la transazione finisce nella coda pendente e verrà ritentata.
         # Se il servizio non è configurato, scriviamo direttamente nella blockchain locale.
         if audit_client.enabled:
-            transaction = audit_blockchain.create_transaction(event_type, audit_payload)
+            transaction = audit_signer.create_transaction(event_type, audit_payload)
             sent = await audit_client.append_transaction(transaction)
             if not sent:
                 # Se l'invio fallisce, mettiamo l'evento in coda per il retry
@@ -103,7 +103,7 @@ async def _flush_pending_events_once() -> None:
     failed: list = []
     for event in events:
         # Ricrea la transazione durante il retry (avrà timestamp differente)
-        transaction = audit_blockchain.create_transaction(event["event_type"], event["payload"])
+        transaction = audit_signer.create_transaction(event["event_type"], event["payload"])
         sent = await audit_client.append_transaction(transaction)
         if not sent:
             failed.append(event)

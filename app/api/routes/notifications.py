@@ -78,12 +78,19 @@ async def notifications_stream(
         # Iscrizione al broker di notifiche e ottenimento della coda delle notifiche
         subscriber_id, queue = await notification_broker.subscribe()
         try:
+            # Invia subito un ping per aprire rapidamente lo stream SSE lato client/test.
+            yield "event: ping\ndata: {}\n\n"
             while True:
                 if await request.is_disconnected():
                     break
                 
                 # Recupera l'evento dalla coda delle notifiche e filtra le notifiche in base al tipo e all'utente loggato
-                event = await asyncio.wait_for(queue.get(), timeout=None)
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=15.0)
+                except asyncio.TimeoutError:
+                    # Keepalive periodico per connessioni inattive.
+                    yield "event: ping\ndata: {}\n\n"
+                    continue
                 payload = event.get("payload", {})
                 event_type = payload.get("type", "post_created")
 
@@ -97,8 +104,6 @@ async def notifications_stream(
                 # Costruisce l'HTML della notifica e lo invia al client tramite SSE
                 html_fragment = notification_broker.build_notification_html(payload)
                 yield f"event: message\ndata: {html_fragment}\n\n"
-        except asyncio.TimeoutError:
-            yield "event: ping\ndata: {}\n\n"
         finally:
             await notification_broker.unsubscribe(subscriber_id)
 

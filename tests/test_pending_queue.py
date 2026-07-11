@@ -12,7 +12,7 @@ from starlette.requests import Request
 
 import app.main as main
 from app.services.pending_queue import PendingAuditQueue
-from app.services.audit_blockchain import AuditBlockchain
+from app.services.audit_blockchain import AuditBlockchain, AuditTransactionSigner
 
 
 # ---------------------------------------------------------------------------
@@ -73,10 +73,7 @@ def test_coda_persistente_su_file(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_middleware_salva_in_coda_quando_validator_offline(tmp_path, monkeypatch):
-    chain_path = tmp_path / "audit_chain.json"
-    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
     pending = PendingAuditQueue(queue_path=tmp_path / "pending.json")
-    monkeypatch.setattr(main, "audit_blockchain", blockchain)
     monkeypatch.setattr(main, "pending_queue", pending)
 
     # audit_client.enabled = True ma append_transaction fallisce (validator offline)
@@ -97,9 +94,6 @@ def test_middleware_salva_in_coda_quando_validator_offline(tmp_path, monkeypatch
 
     assert response.status_code == 200
     assert pending.is_empty() is False
-    stored = json.loads(chain_path.read_text())
-    # Il fallback senza validator deve lasciare intatta la chain locale
-    assert len(stored["chain"]) == 1
     # L'evento deve finire nella coda persistente
     queued = pending.pop_all()
     assert len(queued) == 1
@@ -108,9 +102,13 @@ def test_middleware_salva_in_coda_quando_validator_offline(tmp_path, monkeypatch
 
 def test_middleware_sends_signed_blocks_to_validator(tmp_path, monkeypatch):
     """Test che il middleware invia transazioni firmate al validatore."""
-    chain_path = tmp_path / "audit_chain.json"
-    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
-    monkeypatch.setattr(main, "audit_blockchain", blockchain)
+    signer = AuditTransactionSigner(transaction_signing_secret="test-secret")
+    verifier = AuditBlockchain(
+        chain_path=tmp_path / "audit_chain.json",
+        transaction_signing_secret="test-secret",
+        block_signing_secret="unused-for-this-test",
+    )
+    monkeypatch.setattr(main, "audit_signer", signer)
 
     # Simula un client di audit che riceve le transazioni firmate
     mock_client = AsyncMock()
@@ -145,7 +143,7 @@ def test_middleware_sends_signed_blocks_to_validator(tmp_path, monkeypatch):
     assert "server_id" in transaction
     assert "signature" in transaction
     # Verifica che la transazione sia valida secondo il server
-    assert blockchain.verify_transaction(transaction) is True
+    assert verifier.verify_transaction(transaction) is True
 
 
 def test_middleware_non_salva_in_coda_quando_validator_online(tmp_path, monkeypatch):
@@ -176,10 +174,8 @@ def test_middleware_non_salva_in_coda_quando_validator_online(tmp_path, monkeypa
 
 @pytest.mark.asyncio
 async def test_flush_invia_eventi_pendenti(tmp_path, monkeypatch):
-    chain_path = tmp_path / "audit_chain.json"
-    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
-    monkeypatch.setattr(main, "audit_blockchain", blockchain)
-    
+    monkeypatch.setattr(main, "audit_signer", AuditTransactionSigner(signing_secret="test-secret"))
+
     pending = PendingAuditQueue(queue_path=tmp_path / "pending.json")
     pending.push("get_request", {"path": "/posts"})
     pending.push("post_request", {"path": "/posts"})
@@ -199,10 +195,8 @@ async def test_flush_invia_eventi_pendenti(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_flush_rimette_in_coda_gli_eventi_falliti(tmp_path, monkeypatch):
-    chain_path = tmp_path / "audit_chain.json"
-    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
-    monkeypatch.setattr(main, "audit_blockchain", blockchain)
-    
+    monkeypatch.setattr(main, "audit_signer", AuditTransactionSigner(signing_secret="test-secret"))
+
     pending = PendingAuditQueue(queue_path=tmp_path / "pending.json")
     pending.push("get_request", {"path": "/posts"})
     monkeypatch.setattr(main, "pending_queue", pending)
@@ -221,10 +215,8 @@ async def test_flush_rimette_in_coda_gli_eventi_falliti(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_flush_non_fa_nulla_se_coda_vuota(tmp_path, monkeypatch):
-    chain_path = tmp_path / "audit_chain.json"
-    blockchain = AuditBlockchain(chain_path=chain_path, signing_secret="test-secret")
-    monkeypatch.setattr(main, "audit_blockchain", blockchain)
-    
+    monkeypatch.setattr(main, "audit_signer", AuditTransactionSigner(signing_secret="test-secret"))
+
     pending = PendingAuditQueue(queue_path=tmp_path / "pending.json")
     monkeypatch.setattr(main, "pending_queue", pending)
 
