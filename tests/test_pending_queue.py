@@ -124,12 +124,15 @@ def test_middleware_sends_signed_blocks_to_validator(tmp_path, monkeypatch):
 
     app = FastAPI()
     app.add_middleware(main.CurrentUserMiddleware)
-
+    
+    # Creiamo un endpoint di test che generi un evento da inviare al validator
     @app.get("/test")
     async def test_endpoint(request: Request):
         return PlainTextResponse("ok")
 
     client = TestClient(app)
+    # Chiamiamo il middleware tramite una richiesta GET all'endpoint di test
+    # Il middleware intercetta la richiesta, genera un evento, lo firma e lo invia al audit_client (mock) che lo registra in received_transactions
     response = client.get("/test")
 
     assert response.status_code == 200
@@ -157,7 +160,8 @@ def test_middleware_non_salva_in_coda_quando_validator_online(tmp_path, monkeypa
 
     test_app = FastAPI()
     test_app.add_middleware(main.CurrentUserMiddleware)
-
+    
+    # Creiamo un endpoint di test che generi un evento da inviare al validator
     @test_app.get("/items")
     async def read_items(request: Request):
         return PlainTextResponse("ok")
