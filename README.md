@@ -107,6 +107,10 @@ Stop + rimozione volumi (attenzione: cancella i dati persistiti nei volumi Docke
 
 	docker compose down -v
 
+Stop + rimozione volumi nel caso sia stato attivato neo4j locale (attenzione: cancella i dati persistiti nei volumi Docker):
+
+	docker compose --profile local-db down -v --remove-orphans
+
 
 ### 4. Accedi all'applicazione
 
