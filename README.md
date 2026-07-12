@@ -67,14 +67,17 @@ Ambiente di riferimento: Linux.
 ### 1. Clona il repository
 
     bash
-    git clone https://github.com/SpaxFire/tirocinio.git
+    git clone -b Progetto_Sistemi https://github.com/SpaxFire/tirocinio.git
     cd tirocinio
-    git checkout docker
+    git checkout Progetto_Sistemi
+    docker --version
+    docker compose version
 
 ### 2. Configura le variabili d'ambiente
 
     bash
     cp .env.docker.example .env.docker
+    code .env.docker
 
 
 ### 3. Avvia i servizi
