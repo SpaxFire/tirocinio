@@ -82,7 +82,6 @@ Ambiente di riferimento: Linux.
 
 ### 3. Avvia i servizi
 
-    bash
 ### Avvio standard (backend + validator + mosquitto)
     docker compose up -d --build
 
