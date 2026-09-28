@@ -9,19 +9,7 @@ from app.api.router import api_router
 
 app = FastAPI()
 
-# MIDDLEWARE PER current_user
-class CurrentUserMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-
-        access_token = request.cookies.get("access_token")
-
-        user = await optional_current_user_cookie(access_token)
-
-        request.state.user = user  # disponibile ovunque
-
-        response = await call_next(request)
-        return response
-    
+# MIDDLEWARE PER current_user  
 class CurrentUserMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
 
